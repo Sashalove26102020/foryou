@@ -1,0 +1,2568 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Секретный объект Саши</title>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;700;800&family=Pacifico&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; user-select: none; }
+  body {
+    font-family: 'Comfortaa', sans-serif;
+    background: #050505;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    color: white;
+  }
+
+  .device-container {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    height: 100vh;
+    max-height: 850px;
+    background: #09090b;
+    overflow: hidden;
+    box-shadow: 0 0 50px rgba(0,0,0,0.9);
+    perspective: 1200px;
+  }
+
+  /* Плавный переход между экранами */
+  #fade-overlay { 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    background: #000; z-index: 9999; opacity: 0; pointer-events: none; 
+    transition: opacity 0.6s ease; visibility: hidden; 
+  }
+  #fade-overlay.active { opacity: 1; pointer-events: auto; visibility: visible; }
+
+  /* Экраны */
+  .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 20px; text-align: center; }
+  .screen.active { display: flex; animation: fadeIn 0.5s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+  /* ================= ПОДСКАЗКИ ================= */
+  .hint-text {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.85);
+    color: #fbbf24;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: bold;
+    text-align: center;
+    border: 1px solid #fbbf24;
+    z-index: 500;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    width: 90%;
+    max-width: 350px;
+    pointer-events: none;
+    animation: pulseHint 2s infinite alternate;
+  }
+  @keyframes pulseHint {
+    from { opacity: 0.8; box-shadow: 0 0 5px rgba(251,191,36,0.2); }
+    to { opacity: 1; box-shadow: 0 0 20px rgba(251,191,36,0.6); }
+  }
+
+  /* ================= 1. РАБОЧИЙ СТОЛ (Планета) ================= */
+  #os-screen {
+    background: linear-gradient(rgba(15,23,42,0.3), rgba(15,23,42,0.8)), url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=1000&auto=format&fit=crop') center/cover;
+    padding: 0;
+  }
+
+  .os-status-bar { position: relative; z-index: 20; width: 100%; display: flex; justify-content: space-between; padding: 15px 20px; color: white; font-size: 14px; font-weight: bold; text-shadow: 0 1px 3px #000;}
+
+  .os-notifications-container { position: relative; z-index: 20; margin-top: 20px; width: 90%; max-width: 360px; display: flex; flex-direction: column; gap: 10px; align-items: center; min-height: 150px;}
+  
+  .os-notification { width: 100%; background: rgba(40, 40, 40, 0.85); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 15px; text-align: left; color: white; cursor: pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transition: all 0.3s ease; touch-action: manipulation; position: absolute; top: 0; opacity: 0; transform: translateY(-20px); pointer-events: none;}
+  
+  .os-notification.show { position: relative; opacity: 1; transform: translateY(0); pointer-events: auto; animation: slideDown 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);}
+  @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  
+  .notif-header { display: flex; justify-content: space-between; font-size: 0.7em; color: #aaa; margin-bottom: 5px; text-transform: uppercase; }
+  .notif-title { font-weight: bold; font-size: 1em; color: #fff; margin-bottom: 2px; }
+  .notif-text { font-size: 0.85em; color: #ddd; }
+
+  .tg-notif-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .tg-notif-app { display: flex; align-items: center; gap: 6px; font-size: 0.75em; color: #aaa; text-transform: uppercase;}
+  .tg-icon-bg-sm { width: 16px; height: 16px; background: #2AABEE; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; color: white;}
+  .tg-notif-body { display: flex; gap: 12px; align-items: center; position: relative;}
+  
+  .tg-notif-avatar { 
+    width: 38px; height: 38px; border-radius: 50%; 
+    background: #ec4899 url('liza.jpg') center/cover; 
+    display: flex; justify-content: center; align-items: center; 
+    font-weight: bold; font-size: 1.2em; color: transparent; 
+  }
+  
+  .tg-notif-content { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+  .tg-notif-title { font-weight: 600; font-size: 0.95em; }
+  .tg-notif-text { font-size: 0.9em; color: #ddd; }
+
+  .unread-badge-os { display: none; position: absolute; top: -5px; right: -5px; background: #ef4444; color: white; width: 22px; height: 22px; border-radius: 50%; justify-content: center; align-items: center; font-size: 0.5em; font-weight: bold; border: 2px solid white; z-index: 30; }
+  .unread-badge-os.show { display: flex; }
+
+  .os-home { 
+    position: relative; z-index: 20; width: 100%; 
+    margin-top: 30px; 
+    display: grid; grid-template-columns: repeat(3, 70px); gap: 20px; justify-content: center; align-content: flex-start;
+  }
+  
+  .app-icon-container { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; width: 70px; touch-action: manipulation;}
+  .app-icon { width: 70px; height: 70px; border-radius: 18px; display: flex; justify-content: center; align-items: center; font-size: 2em; box-shadow: 0 10px 20px rgba(0,0,0,0.4); border: 2px solid rgba(255,255,255,0.2); transition: transform 0.2s; position: relative; }
+  .app-icon:active { transform: scale(0.9); }
+  .icon-gas { background: linear-gradient(135deg, #f59e0b, #ea580c); }
+  .icon-tg { background: #2AABEE; }
+  .icon-notes { background: linear-gradient(135deg, #fcd34d, #f59e0b); color: #000;}
+  .app-name { font-size: 0.8em; font-weight: bold; color: white; text-shadow: 0 2px 4px #000; text-align: center;}
+
+  /* ================= 2. ЛОГИН ================= */
+  #app-login { background: #0f172a; justify-content: center; }
+  .login-panel { width: 90%; max-width: 320px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 30px 20px; backdrop-filter: blur(10px); position: relative; margin-bottom: 60px;}
+  .login-close { position: absolute; top: 15px; right: 15px; font-size: 1.2em; color: #94a3b8; cursor: pointer; padding: 5px; }
+  .login-title { font-size: 1.5em; font-weight: 800; color: #f59e0b; margin-bottom: 20px; }
+  .input-group { text-align: left; margin-bottom: 15px; }
+  .input-group label { display: block; font-size: 0.8em; color: #94a3b8; margin-bottom: 5px; margin-left: 5px; font-weight: bold;}
+  .login-input { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #334155; background: #1e293b; color: white; font-size: 1em; outline: none; font-family: 'Comfortaa', sans-serif; transition: border-color 0.3s; }
+  .login-input:focus { border-color: #f59e0b; }
+  .error-text { color: #ef4444; font-weight: bold; font-size: 0.8em; margin-bottom: 10px; min-height: 18px; text-align: center;}
+
+  /* ================= 3. ДИСПЕТЧЕРСКАЯ ================= */
+  #app-dashboard { background: #0f172a; justify-content: flex-start; padding-top: 40px;}
+  .dispatch-card { width: 90%; max-width: 350px; background: #1e293b; border: 2px solid #ef4444; border-radius: 16px; padding: 20px; text-align: left; box-shadow: 0 0 30px rgba(239,68,68,0.2); margin-bottom: 20px; animation: pulseBorder 2s infinite alternate; }
+  @keyframes pulseBorder { from { box-shadow: 0 0 10px rgba(239,68,68,0.2); } to { box-shadow: 0 0 30px rgba(239,68,68,0.5); } }
+  .dispatch-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 10px; margin-bottom: 15px; }
+  .dispatch-tag { background: #ef4444; color: white; font-size: 0.7em; font-weight: bold; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; }
+  .dispatch-time { font-size: 0.8em; color: #94a3b8; }
+  .dispatch-address { font-size: 1.3em; font-weight: 800; color: #fff; margin-bottom: 5px; }
+  .dispatch-desc { font-size: 0.9em; color: #cbd5e1; line-height: 1.4; margin-bottom: 15px; }
+  .dispatch-info-row { display: flex; justify-content: space-between; font-size: 0.8em; color: #94a3b8; margin-bottom: 5px;}
+  
+  .complete-panel { width: 90%; max-width: 350px; background: #1e293b; border-radius: 16px; padding: 20px; text-align: left; display: none; margin-bottom: 60px;}
+  .complete-panel.show { display: block; animation: fadeIn 0.3s; }
+  .checkbox-row { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; cursor: pointer; font-size: 0.9em; font-weight: bold; color: #cbd5e1; }
+  .checkbox-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: #22c55e; cursor: pointer; }
+
+  /* ================= 4. ГАЗ (УТЕЧКА) ================= */
+  #gas-screen { padding: 0; justify-content: flex-start; background: #0f172a; z-index: 40;}
+  .gas-hud { position: absolute; top: 20px; left: 20px; right: 20px; z-index: 100; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.2); border-radius: 16px; padding: 12px 20px; backdrop-filter: blur(5px); }
+  .gas-task { font-weight: 800; font-size: 0.9em; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; }
+  .gas-status { font-weight: bold; font-size: 0.9em; color: #ef4444; display: flex; align-items: center; gap: 5px; }
+  .status-dot { width: 10px; height: 10px; background: #ef4444; border-radius: 50%; animation: blink 1s infinite alternate; box-shadow: 0 0 10px #ef4444; }
+  @keyframes blink { from { opacity: 0.5; } to { opacity: 1; } }
+  
+  .scene-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden; z-index: 10; background: #0f172a; }
+  .room-bg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=1000&auto=format&fit=crop') center/cover; filter: blur(8px) brightness(0.4); z-index: 0; }
+  .pipes-bg { position: absolute; width: 100%; height: 100%; z-index: 1; transition: transform 0.8s ease-in-out; }
+  .pipe-h { position: absolute; width: 100%; height: 40px; background: linear-gradient(to bottom, #475569, #1e293b, #475569); box-shadow: inset 0 0 10px #000, 0 15px 25px rgba(0,0,0,0.8); transform: translateY(-50%); }
+  .pipe-v { position: absolute; height: 100%; width: 40px; background: linear-gradient(to right, #475569, #1e293b, #475569); box-shadow: inset 0 0 10px #000, 15px 0 25px rgba(0,0,0,0.8); transform: translateX(-50%); }
+  .flange-node { position: absolute; width: 55px; height: 55px; background: radial-gradient(circle at 30% 30%, #64748b, #1e293b); border-radius: 50%; border: 5px solid #0f172a; box-shadow: 0 10px 15px rgba(0,0,0,0.9); transform: translate(-50%, -50%); z-index: 5; transition: all 0.3s; }
+  .leak-node { box-shadow: 0 0 40px #ef4444; border-color: #ef4444; }
+  
+  #drag-analyzer { position: absolute; width: 110px; height: 130px; background: linear-gradient(135deg, #334155, #0f172a); border-radius: 12px; border: 3px solid #000; z-index: 20; display: flex; flex-direction: column; align-items: center; padding: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.9); cursor: grab; touch-action: none; }
+  #drag-analyzer:active { cursor: grabbing; }
+  .analyzer-screen { width: 100%; height: 65px; background: #000; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px solid #1e293b; box-shadow: inset 0 0 10px rgba(0,255,0,0.1); }
+  .analyzer-val { font-family: monospace; font-size: 1.4em; font-weight: bold; color: #22c55e; }
+  .analyzer-status { font-size: 0.55em; color: #aaa; margin-top: 5px; transition: color 0.2s; }
+  .analyzer-grip { width: 50px; height: 15px; background: #111; border-radius: 5px; margin-top: 10px; border: 1px solid #333;}
+
+  .overlay-stage { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 40; display: none; flex-direction: column; justify-content: center; align-items: center; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); padding-bottom: 80px;}
+  
+  .valve-turner { width: 180px; height: 180px; background: radial-gradient(circle, #94a3b8, #334155); border-radius: 50%; border: 6px solid #1e293b; position: relative; box-shadow: 0 20px 40px #000, inset 0 0 20px rgba(255,255,255,0.2), inset 0 0 10px rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; touch-action: none; cursor: grab; }
+  .valve-turner:active { cursor: grabbing; }
+  .valve-turner::before, .valve-turner::after { content: ''; position: absolute; width: 140px; height: 20px; background: linear-gradient(to bottom, #64748b, #1e293b); border-radius: 10px; pointer-events: none; border: 1px solid #0f172a; }
+  .valve-turner::after { transform: rotate(90deg); }
+  .valve-center { width: 50px; height: 50px; background: radial-gradient(circle, #cbd5e1, #475569); border-radius: 50%; z-index: 2; box-shadow: inset 0 0 10px rgba(0,0,0,0.8), 0 5px 10px rgba(0,0,0,0.5); border: 3px solid #1e293b; display: flex; justify-content: center; align-items: center; }
+  .valve-center::after { content: '⚙'; color: #1e293b; font-size: 1.5em; }
+
+  .flange-repair { position: relative; width: 240px; height: 240px; background: radial-gradient(circle at 30% 30%, #64748b, #1e293b); border-radius: 50%; border: 10px solid #0f172a; display: flex; justify-content: center; align-items: center; box-shadow: 0 25px 50px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.8); }
+  
+  /* Исправлено: добавлен touch-action: none для прокладок */
+  .gasket { width: 140px; height: 140px; border-radius: 50%; position: absolute; box-shadow: inset 0 0 15px rgba(0,0,0,0.5); touch-action: none; }
+  .gasket-old { background: #ef4444; border: 4px solid #7f1d1d; transition: transform 0.3s, opacity 0.3s; cursor: grab; z-index: 2; }
+  .gasket-old.removed { transform: translate(200px, 100px) scale(0.5); opacity: 0; pointer-events: none; }
+  
+  .gasket-new { background: #22c55e; border: 4px solid #14532d; position: fixed; z-index: 999; display: none; cursor: grab; box-shadow: 0 10px 20px rgba(0,0,0,0.5); touch-action: none; }
+  .gasket-new.visible { display: block; }
+  .gasket-new.placed { position: absolute; left: 50%; top: 50%; margin-left: -70px; margin-top: -70px; transform: none; z-index: 1; pointer-events: none; width: 140px; height: 140px; transition: all 0.3s; }
+  
+  .bolt { position: absolute; width: 38px; height: 38px; background: radial-gradient(circle at 30% 30%, #cbd5e1, #475569); border-radius: 50%; border: 3px solid #0f172a; display: flex; justify-content: center; align-items: center; font-size: 1.6em; cursor: pointer; transition: transform 0.1s; z-index: 10; box-shadow: 0 5px 10px rgba(0,0,0,0.8);}
+  .bolt::after { content: '✛'; color: #1e293b; font-weight: bold; }
+  .bolt.done { pointer-events: none; opacity: 0.3; }
+  .bolt-1 { top: 15px; left: 15px; } .bolt-2 { top: 15px; right: 15px; }
+  .bolt-3 { bottom: 15px; left: 15px; } .bolt-4 { bottom: 15px; right: 15px; }
+  .steam { position: absolute; width: 40px; height: 40px; background: rgba(255,255,255,0.9); border-radius: 50%; filter: blur(10px); pointer-events: none; z-index: 15; animation: steamRise 1.2s ease-out forwards; }
+  @keyframes steamRise { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--tx), -150px) scale(4); opacity: 0; } }
+
+  /* ================= 5. ЗАМЕНА СЧЕТЧИКА ================= */
+  #meter-screen { background: #0f172a; z-index: 50; padding: 0; justify-content: center; overflow: hidden; }
+  
+  .meter-hud { position: absolute; top: 30px; left: 0; width: 100%; text-align: center; z-index: 100; padding: 0 20px; }
+  .meter-task { color: white; font-weight: bold; font-size: 1.1em; background: rgba(0,0,0,0.7); padding: 10px 20px; border-radius: 20px; border: 1px solid #fbbf24; display: inline-block; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: all 0.3s; backdrop-filter: blur(5px);}
+  
+  .meter-scene { 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    display: flex; justify-content: center; align-items: center; 
+  }
+
+  .m-pipe-top { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 50px; height: calc(50% - 120px); background: linear-gradient(90deg, #475569, #94a3b8, #475569); box-shadow: inset 0 0 10px rgba(0,0,0,0.8); z-index: 1;}
+  .m-pipe-bottom { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); width: 50px; height: calc(50% - 120px); background: linear-gradient(90deg, #475569, #94a3b8, #475569); box-shadow: inset 0 0 10px rgba(0,0,0,0.8); z-index: 1;}
+  
+  .m-valve-base { 
+    position: absolute; top: calc(50% - 140px); left: 50%; transform: translateX(-50%); 
+    width: 70px; height: 40px; background: radial-gradient(circle, #64748b, #334155); 
+    border-radius: 8px; z-index: 5; border: 2px solid #1e293b; box-shadow: 0 5px 10px rgba(0,0,0,0.5);
+  }
+  .m-valve-lever { 
+    position: absolute; top: -50px; left: 50%; width: 24px; height: 70px; 
+    background: linear-gradient(90deg, #22c55e, #15803d);
+    border-radius: 10px; 
+    transform-origin: bottom center; transform: translateX(-50%) rotate(0deg);
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    z-index: 6; cursor: pointer; box-shadow: 0 5px 10px rgba(0,0,0,0.5); border: 2px solid #14532d;
+  }
+  .m-valve-lever.closed { 
+    transform: translateX(-50%) rotate(90deg); 
+    background: linear-gradient(90deg, #ef4444, #b91c1c);
+    border-color: #7f1d1d; 
+  }
+
+  .meter-body { 
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+    width: 200px; height: 200px; background: linear-gradient(135deg, #cbd5e1, #94a3b8); 
+    border-radius: 20px; border: 6px solid #334155; 
+    box-shadow: 0 25px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(255,255,255,0.6); 
+    display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; 
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.4s, box-shadow 0.3s;
+  }
+  .meter-body.old { background: linear-gradient(135deg, #64748b, #334155); border-color: #0f172a; box-shadow: 0 25px 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(255,255,255,0.2); cursor: pointer;}
+  .meter-body.old.removing { transform: translate(-50%, 200px) scale(0.8); opacity: 0; pointer-events: none; }
+  
+  .meter-body.new { display: none; background: linear-gradient(135deg, #e2e8f0, #cbd5e1); border-color: #3b82f6; box-shadow: 0 25px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(255,255,255,0.8); }
+  .meter-body.connected { box-shadow: 0 0 40px rgba(34,197,94,0.6), 0 25px 50px rgba(0,0,0,0.8), inset 0 0 30px rgba(255,255,255,0.8); border-color: #22c55e; }
+  
+  .meter-screen-display { width: 140px; height: 60px; background: #000; border-radius: 8px; display: flex; justify-content: center; align-items: center; border: 3px solid #475569; box-shadow: inset 0 0 15px rgba(0,255,0,0.2); }
+  .meter-digits { font-family: 'Courier New', monospace; font-size: 2.2em; font-weight: bold; color: #22c55e; letter-spacing: 3px; }
+  .meter-body.old .meter-digits { color: #ef4444; text-shadow: 0 0 10px rgba(239,68,68,0.5); }
+  .meter-body.new .meter-digits { color: #22c55e; text-shadow: 0 0 10px rgba(34,197,94,0.5); }
+  
+  .meter-dial { width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle, #fff, #cbd5e1); margin-top: 15px; position: relative; border: 3px solid #333; box-shadow: inset 0 2px 5px rgba(0,0,0,0.3); }
+  .meter-dial::after { content: ''; position: absolute; top: 5px; left: 50%; width: 3px; height: 18px; background: #ef4444; transform-origin: bottom center; transform: translateX(-50%) rotate(45deg); border-radius: 2px;}
+
+  .hose-wrapper {
+    position: absolute; top: calc(50% + 100px); left: 50%; transform: translateX(-50%);
+    width: 46px; height: 160px; z-index: 4; display: flex; flex-direction: column; align-items: center;
+    opacity: 0; transition: opacity 0.3s; pointer-events: none;
+  }
+  .hose-wrapper.show { opacity: 1; pointer-events: auto; cursor: pointer; }
+  
+  .hose-nut {
+    width: 46px; height: 34px; 
+    background: linear-gradient(to bottom, #d4d4d8, #71717a, #3f3f46); 
+    border-radius: 6px; border: 2px solid #18181b; position: absolute; top: -17px;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.6);
+    display: flex; justify-content: center; align-items: center; z-index: 2;
+  }
+  .hose-tube {
+    width: 26px; height: 100%; margin-top: 15px;
+    background: repeating-linear-gradient(0deg, #27272a, #27272a 8px, #18181b 8px, #18181b 16px); 
+    border-radius: 6px; position: relative;
+    box-shadow: inset -5px 0 10px rgba(0,0,0,0.9), inset 5px 0 10px rgba(255,255,255,0.05), 0 10px 20px rgba(0,0,0,0.5);
+  }
+
+  .paper-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 200;
+    display: none; justify-content: center; align-items: center; flex-direction: column;
+  }
+  .paper-overlay.active { display: flex; animation: fadeIn 0.3s; }
+  .paper-sheet {
+    width: 280px; background: #fef3c7; border-radius: 4px; padding: 20px;
+    color: #333; font-family: 'Courier New', Courier, monospace; text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 0 1px #d97706;
+    transform: rotate(-2deg);
+  }
+  .paper-sheet h3 { font-family: 'Comfortaa', sans-serif; color: #b45309; font-size: 1.1em; margin-bottom: 10px; border-bottom: 1px dashed #d97706; padding-bottom: 5px;}
+  .paper-digits { font-size: 2em; font-weight: bold; color: #ef4444; letter-spacing: 2px; margin: 15px 0; background: #fff; padding: 10px; border: 2px solid #ef4444; border-radius: 4px; display: inline-block;}
+
+  #hose-zoom { 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px); 
+    z-index: 300; display: none; flex-direction: column; justify-content: center; align-items: center; 
+  }
+  #hose-zoom.active { display: flex; animation: fadeIn 0.3s; }
+  
+  .zoom-scene { position: relative; width: 300px; height: 450px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 50px;}
+  
+  .zoom-pipe { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 80px; height: 150px; background: linear-gradient(90deg, #475569, #94a3b8, #475569); box-shadow: inset 0 0 20px rgba(0,0,0,0.8); z-index: 1;}
+  
+  .zoom-nut-container { 
+    position: relative; width: 140px; height: 140px; 
+    z-index: 10; cursor: grab; touch-action: none; 
+    margin-bottom: 20px;
+  }
+  .zoom-nut-container:active { cursor: grabbing; }
+  
+  .zoom-nut-body { 
+    width: 100%; height: 100%; border-radius: 50%; 
+    background: radial-gradient(circle at 30% 30%, #d4d4d8, #71717a, #3f3f46); 
+    border: 4px solid #18181b; box-shadow: 0 20px 30px rgba(0,0,0,0.8), inset 0 5px 15px rgba(255,255,255,0.4);
+    display: flex; justify-content: center; align-items: center;
+    position: relative;
+  }
+  .zoom-nut-body::before {
+    content: ''; position: absolute; width: 110px; height: 110px; border-radius: 50%; border: 10px dashed #52525b;
+  }
+  .zoom-nut-body::after {
+    content: ''; position: absolute; width: 50px; height: 50px; border-radius: 50%; background: #18181b; border: 4px solid #3f3f46; box-shadow: inset 0 5px 10px #000;
+  }
+
+  .zoom-hose-tube {
+    width: 60px; height: 250px; 
+    background: repeating-linear-gradient(0deg, #27272a, #27272a 15px, #18181b 15px, #18181b 30px); 
+    border-radius: 10px; box-shadow: inset -10px 0 20px rgba(0,0,0,0.9), inset 10px 0 20px rgba(255,255,255,0.05); 
+    z-index: 2; transition: transform 0.4s ease;
+    cursor: grab;
+  }
+  .zoom-hose-tube:active { cursor: grabbing; }
+
+  .m-analyzer { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 90px; height: 110px; background: linear-gradient(135deg, #334155, #0f172a); border-radius: 12px; border: 2px solid #000; display: none; cursor: grab; z-index: 20; flex-direction: column; align-items: center; padding: 8px; box-shadow: 0 15px 30px rgba(0,0,0,0.8); touch-action: none;}
+  .m-analyzer.show { display: flex; }
+  .m-analyzer:active { cursor: grabbing; }
+  .m-analyzer-screen { width: 100%; height: 50px; background: #000; border-radius: 6px; display: flex; flex-direction: column; justify-content: center; align-items: center; border: 2px solid #1e293b; box-shadow: inset 0 0 10px rgba(0,255,0,0.1); position: relative; overflow: hidden;}
+  .m-analyzer-val { color: #22c55e; font-family: monospace; font-weight: bold; font-size: 0.9em; z-index: 2; transition: color 0.3s;}
+  
+  .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 2px; background: #eab308; box-shadow: 0 0 10px #eab308; opacity: 0; z-index: 1; }
+  .m-analyzer.analyzing .scan-line { opacity: 1; animation: scanAnim 1s linear infinite; }
+  @keyframes scanAnim { 0% { top: 0; } 100% { top: 100%; } }
+  .m-analyzer.analyzing .m-analyzer-val { color: #eab308; }
+
+  /* ================= 6. ЧАТ ================= */
+  #tg-chat { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 600; display: none; justify-content: center; align-items: center; }
+  #tg-chat.active { display: flex; animation: fadeIn 0.3s; }
+  .tg-window { width: 100%; height: 100%; background: #0e1621; display: flex; flex-direction: column; overflow: hidden; }
+  .tg-chat-header { background: #212121; padding: 45px 15px 10px 15px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #333; }
+  .tg-back { color: #3390ec; font-size: 1.5em; cursor: pointer; padding-right: 10px; }
+  
+  .tg-chat-avatar { 
+    width: 40px; height: 40px; border-radius: 50%; 
+    background: #ec4899 url('liza.jpg') center/cover; 
+    display: flex; justify-content: center; align-items: center; 
+    font-size: 1.2em; color: transparent; 
+  }
+  
+  .tg-chat-info { display: flex; flex-direction: column; text-align: left; }
+  .tg-chat-name { color: white; font-weight: bold; font-size: 1em; }
+  .tg-chat-status { color: #aaa; font-size: 0.75em; }
+  .tg-chat-messages { flex: 1; padding: 15px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; background-image: url('https://web.telegram.org/img/bg_initial_private.png'); background-size: cover; }
+  .tg-msg { max-width: 80%; padding: 10px 14px; border-radius: 12px; font-size: 0.9em; line-height: 1.4; color: white; animation: msgIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; transform: translateY(10px);}
+  @keyframes msgIn { to { opacity: 1; transform: translateY(0); } }
+  .tg-msg.gf { background: #8774e1; align-self: flex-start; border-bottom-left-radius: 2px; }
+  .tg-msg.maxim { background: #212121; align-self: flex-end; border-bottom-right-radius: 2px; }
+
+  /* ================= 7. ЗАМЕТКИ ================= */
+  #notes-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 800; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+  #notes-modal.active { display: flex; animation: fadeIn 0.3s; }
+  .notes-paper { width: 90%; max-width: 350px; height: 70%; background: #fef3c7; border-radius: 8px; padding: 20px; color: #333; font-family: 'Courier New', Courier, monospace; font-size: 0.95em; text-align: left; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.8); border-left: 4px solid #b45309; }
+  .notes-paper h3 { margin-bottom: 15px; border-bottom: 1px dashed #d97706; padding-bottom: 5px; font-family: 'Comfortaa', sans-serif;}
+  .notes-paper p { margin-bottom: 12px; line-height: 1.4; }
+  .notes-paper b { color: #b45309; }
+  .close-notes { margin-top: 20px; padding: 10px; background: #f59e0b; color: white; border: none; border-radius: 6px; width: 100%; font-weight: bold; cursor: pointer; }
+
+  /* ================= 8. БУДИЛЬНИК ================= */
+  #alarm-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 900; display: none; flex-direction: column; justify-content: center; align-items: center; color: white; text-align: center; }
+  #alarm-screen.active { display: flex; animation: fadeIn 0.3s; }
+  .alarm-icon { font-size: 5em; animation: ring 1s infinite alternate; }
+  @keyframes ring { from { transform: rotate(-10deg); } to { transform: rotate(10deg); } }
+  .alarm-title { font-size: 2em; font-weight: 300; margin: 20px 0; }
+  .alarm-btn { background: #ef4444; color: white; border: none; padding: 15px 40px; border-radius: 30px; font-size: 1.2em; font-weight: bold; cursor: pointer; box-shadow: 0 10px 20px rgba(239,68,68,0.5); }
+
+  /* ================= 9. ЭКРАН ПАУЗЫ ================= */
+  #black-screen { 
+    position: absolute; top:0; left:0; width:100%; height:100%; 
+    background: #000; z-index: 950; display: none; flex-direction: column; justify-content: center; align-items: center; color: white;
+  }
+  .pause-text {
+    font-size: 1.5em; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+    color: #64748b; opacity: 0; animation: pulseText 2s infinite alternate, fadeInText 1s forwards;
+    text-shadow: 0 0 20px rgba(100, 116, 139, 0.5);
+  }
+  @keyframes pulseText { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+  @keyframes fadeInText { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  /* ================= 10. СБОР СУМКИ ================= */
+  #gymbag-screen { 
+    z-index: 1000; justify-content: flex-start; padding-top: 30px;
+    background: #1e293b; perspective: 1000px;
+  }
+  
+  .locker-room {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background-image: 
+      linear-gradient(to bottom, rgba(15,23,42,0.7), rgba(15,23,42,0.95)),
+      repeating-linear-gradient(90deg, #3f3f46, #3f3f46 25px, #27272a 25px, #27272a 50px);
+    z-index: 1;
+  }
+  .neon-light { position: absolute; top: 10%; left: 50%; transform: translateX(-50%); width: 200px; height: 200px; background: radial-gradient(circle, rgba(59,130,246,0.3) 0%, transparent 70%); z-index: 2; pointer-events: none; filter: blur(20px);}
+  
+  .bench {
+    position: absolute; bottom: 0; left: 0; width: 100%; height: 200px;
+    background: linear-gradient(to bottom, #78350f, #451a03);
+    box-shadow: inset 0 15px 30px rgba(0,0,0,0.8), 0 -10px 30px rgba(0,0,0,0.5); 
+    z-index: 2;
+  }
+  .bench::after { 
+    content:''; position:absolute; top:0; left:0; width:100%; height:6px; 
+    background: linear-gradient(to bottom, #d97706, #92400e); 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5); 
+  }
+
+  .bag-title { position: relative; z-index: 10; color: white; font-size: 1.4em; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 4px #000;}
+  
+  .target-list { 
+    position: relative; z-index: 10; display: flex; gap: 15px; margin-bottom: 20px;
+    background: rgba(0,0,0,0.6); padding: 10px 20px; border-radius: 20px; border: 1px solid #3b82f6;
+    box-shadow: 0 0 20px rgba(59,130,246,0.3);
+  }
+  .target-item { font-size: 1.5em; position: relative; filter: grayscale(1); opacity: 0.5; transition: all 0.3s;}
+  .target-item.found { filter: grayscale(0); opacity: 1; transform: scale(1.2); text-shadow: 0 0 10px #22c55e; }
+
+  .bag-container {
+    position: absolute; bottom: 50px; left: 50%; 
+    transform: translateX(-50%);
+    width: 260px; height: 120px; 
+    z-index: 5;
+    transition: all 0.2s;
+  }
+  
+  .bag-body {
+    width: 100%; height: 100%;
+    background: linear-gradient(135deg, #1e3a8a 0%, #172554 50%, #0f172a 100%);
+    border-radius: 40px 40px 20px 20px;
+    border: 3px solid #0f172a;
+    box-shadow: 0 25px 40px rgba(0,0,0,0.9), inset 0 15px 20px rgba(255,255,255,0.1), inset 0 -15px 20px rgba(0,0,0,0.6);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .bag-zipper {
+    position: absolute; top: 25px; left: 10%; width: 80%; height: 8px;
+    background: repeating-linear-gradient(90deg, #94a3b8, #94a3b8 3px, #334155 3px, #334155 6px);
+    border-radius: 3px; border-top: 1px solid #cbd5e1; border-bottom: 1px solid #000;
+    z-index: 3;
+  }
+  
+  .bag-handle {
+    position: absolute; top: -35px; left: 50%; transform: translateX(-50%);
+    width: 100px; height: 40px; border: 8px solid #0f172a; border-bottom: none; border-radius: 50px 50px 0 0;
+    box-shadow: inset 0 5px 5px rgba(255,255,255,0.1), 0 -5px 10px rgba(0,0,0,0.5);
+    z-index: 4;
+  }
+  
+  .bag-container.drag-over { 
+    transform: translateX(-50%) scale(1.05); 
+  }
+  .bag-container.drag-over .bag-body {
+    box-shadow: 0 25px 40px rgba(0,0,0,0.9), 0 0 40px rgba(34,197,94,0.6), inset 0 15px 20px rgba(255,255,255,0.1); 
+    border-color: #22c55e;
+  }
+
+  .locker-grid {
+    position: relative; z-index: 10; width: 90%; max-width: 340px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 10px;
+  }
+  .bag-item {
+    cursor: grab; touch-action: none; transition: transform 0.2s, opacity 0.3s, box-shadow 0.2s, background 0.2s;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
+    background: linear-gradient(135deg, #334155, #0f172a);
+    border-radius: 16px; padding: 15px 5px; border: 2px solid rgba(255,255,255,0.1);
+    box-shadow: 5px 10px 20px rgba(0,0,0,0.8), inset 0 2px 5px rgba(255,255,255,0.2);
+    transform: rotateX(5deg) rotateY(-5deg);
+    height: 95px;
+  }
+  .bag-item .emoji { font-size: 2.5em; filter: drop-shadow(0 5px 5px rgba(0,0,0,0.6)); }
+  .bag-item span { font-size: 0.65em; color: #cbd5e1; font-weight: bold; text-align: center; margin-top: 5px;}
+  
+  .bag-item:active { cursor: grabbing; transform: rotateX(0) rotateY(0) scale(1.15); z-index: 99; box-shadow: 0 20px 40px rgba(0,0,0,0.8), 0 0 20px rgba(59,130,246,0.6); }
+  
+  .bag-item.wrong-item { border-color: #ef4444; background: linear-gradient(135deg, #7f1d1d, #450a0a); animation: shake 0.4s; box-shadow: 0 0 20px rgba(239,68,68,0.8); }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+
+  .bag-item.placed { opacity: 0; transform: scale(0.3) translateY(100px); pointer-events: none; }
+
+  /* ================= 11. КАЧАЛКА ================= */
+  #gym-screen { 
+    justify-content: space-between; padding-top: 30px; padding-bottom: 20px; 
+    background: #09090b; z-index: 700;
+    background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #09090b 70%);
+  }
+  
+  .gym-header { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 20px; margin-bottom: 10px;}
+  .gym-lives { font-size: 1.5em; letter-spacing: 5px; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+  
+  .pulse-monitor { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.6); padding: 5px 15px; border-radius: 20px; border: 1px solid #334155; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
+  .pulse-icon { font-size: 1.2em; animation: beat 1s infinite; }
+  @keyframes beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.3); } 30% { transform: scale(1); } 45% { transform: scale(1.2); } }
+  .pulse-value { font-family: monospace; font-weight: bold; font-size: 1.2em; color: #22c55e; transition: color 0.3s; }
+  .pulse-value.danger { color: #ef4444; text-shadow: 0 0 10px #ef4444; }
+  
+  .ekg-container { width: 120px; height: 30px; overflow: hidden; position: relative; }
+  .ekg-line { width: 100%; height: 100%; background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 30" xmlns="http://www.w3.org/2000/svg"><polyline points="0,15 20,15 25,5 30,25 35,15 50,15 55,5 60,25 65,15 80,15 85,5 90,25 95,15 100,15" fill="none" stroke="%2322c55e" stroke-width="2" stroke-linejoin="round"/></svg>'); background-repeat: repeat-x; background-size: 100px 30px; animation: scrollEkg 1s linear infinite; }
+  .ekg-line.danger { background-image: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 30" xmlns="http://www.w3.org/2000/svg"><polyline points="0,15 20,15 25,5 30,25 35,15 50,15 55,5 60,25 65,15 80,15 85,5 90,25 95,15 100,15" fill="none" stroke="%23ef4444" stroke-width="2" stroke-linejoin="round"/></svg>'); animation-duration: 0.3s;}
+  @keyframes scrollEkg { from { background-position: 100px 0; } to { background-position: 0 0; } }
+
+  .gym-weight { font-size: 3.5em; font-weight: 900; color: #ec4899; text-shadow: 0 0 30px rgba(236,72,153,0.8); line-height: 1; transition: all 0.3s; margin-top: 10px; }
+  .gym-reps { font-size: 1em; font-weight: bold; color: #fbbf24; letter-spacing: 1px; margin-bottom: 20px;}
+  
+  .barbell-container { margin: 10px 0; position: relative; transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+  .barbell-graphic { display: flex; align-items: center; justify-content: center; position: relative; filter: drop-shadow(0 25px 30px rgba(0,0,0,0.9)); }
+  .bar { width: 220px; height: 14px; background: linear-gradient(to bottom, #e2e8f0, #64748b); border-radius: 7px; position: relative; z-index: 1; }
+  .bar::before, .bar::after { content: ''; position: absolute; top: 50%; transform: translateY(-50%); width: 15px; height: 24px; background: #333; border-radius: 4px; }
+  .bar::before { left: 10px; } .bar::after { right: 10px; }
+  .plate { width: 40px; height: 120px; background: #222; border: 4px solid #444; border-radius: 12px; position: relative; z-index: 2; display: flex; justify-content: center; align-items: center; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); box-shadow: inset 0 5px 15px rgba(255,255,255,0.1), inset 0 -5px 15px rgba(0,0,0,0.8); }
+  .plate[data-weight="60"] { background: #1e3a8a; height: 100px; border-color: #3b82f6; box-shadow: 0 0 20px rgba(59,130,246,0.5), inset 0 5px 15px rgba(255,255,255,0.2), inset 0 -5px 15px rgba(0,0,0,0.8);}
+  .plate[data-weight="80"] { background: #854d0e; height: 130px; border-color: #facc15; box-shadow: 0 0 20px rgba(250,204,21,0.5), inset 0 5px 15px rgba(255,255,255,0.2), inset 0 -5px 15px rgba(0,0,0,0.8);}
+  .plate[data-weight="100"] { background: #991b1b; height: 160px; border-color: #ef4444; box-shadow: 0 0 20px rgba(239,68,68,0.5), inset 0 5px 15px rgba(255,255,255,0.2), inset 0 -5px 15px rgba(0,0,0,0.8);}
+  .plate.left { margin-right: -15px; border-right: none; } .plate.right { margin-left: -15px; border-left: none; }
+  
+  .barbell-container.lift { transform: translateY(-40px); }
+  .barbell-container.fail { animation: failShake 0.4s; }
+  @keyframes failShake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-15px) rotate(-2deg); } 40% { transform: translateX(15px) rotate(2deg); } 60% { transform: translateX(-10px) rotate(-1deg); } 80% { transform: translateX(10px) rotate(1deg); } }
+
+  .control-panel { width: 100%; display: flex; flex-direction: column; align-items: center; gap: 15px; margin-bottom: 60px;}
+  
+  .timing-bar-wrapper { width: 100%; max-width: 320px; background: rgba(0,0,0,0.6); padding: 8px; border-radius: 30px; border: 2px solid rgba(255,255,255,0.1); box-shadow: inset 0 5px 20px rgba(0,0,0,0.8);}
+  .timing-bar-container { position: relative; width: 100%; height: 28px; background: #1e293b; border-radius: 15px; overflow: hidden; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5); }
+  .timing-zone { position: absolute; top: 0; height: 100%; background: linear-gradient(90deg, rgba(34,197,94,0.4), rgba(34,197,94,0.8), rgba(34,197,94,0.4)); box-shadow: 0 0 15px rgba(34,197,94,0.8); border-left: 2px solid #22c55e; border-right: 2px solid #22c55e; transition: left 0.3s, width 0.3s; }
+  .timing-indicator { position: absolute; top: 0; width: 6px; height: 100%; background: #fff; box-shadow: 0 0 10px #fff, 0 0 20px #fff; border-radius: 3px; z-index: 2; }
+  
+  .push-btn { background: linear-gradient(to bottom, #ef4444, #b91c1c); color: white; padding: 16px 40px; border-radius: 40px; border: 2px solid #fca5a5; font-weight: 900; font-size: 1.2em; cursor: pointer; box-shadow: 0 10px 20px rgba(239,68,68,0.4), inset 0 3px 0 rgba(255,255,255,0.3); transition: all 0.1s; text-transform: uppercase; width: 200px; }
+  .push-btn:active { transform: translateY(4px); box-shadow: 0 5px 10px rgba(239,68,68,0.4), inset 0 3px 0 rgba(255,255,255,0.3); }
+  .push-btn.disabled { background: #334155; color: #64748b; border-color: #1e293b; box-shadow: none; pointer-events: none; }
+  
+  .rest-btn { background: linear-gradient(to bottom, #3b82f6, #1d4ed8); color: white; padding: 16px 40px; border-radius: 40px; border: 2px solid #93c5fd; font-weight: 900; font-size: 1.1em; cursor: pointer; box-shadow: 0 10px 20px rgba(59,130,246,0.4), inset 0 3px 0 rgba(255,255,255,0.3); text-transform: uppercase; width: 200px; display: none; animation: pulseRest 1.5s infinite alternate;}
+  @keyframes pulseRest { from { box-shadow: 0 0 10px rgba(59,130,246,0.4); } to { box-shadow: 0 0 30px rgba(59,130,246,0.8); } }
+  .rest-btn.show { display: block; }
+  .rest-btn.disabled { background: #334155; color: #64748b; border-color: #1e293b; box-shadow: none; pointer-events: none; animation: none; }
+
+  .screen-flash { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; opacity: 0; }
+  .screen-flash.success { background: rgba(34,197,94,0.2); animation: flashAnim 0.3s; }
+  .screen-flash.error { background: rgba(239,68,68,0.3); animation: flashAnim 0.3s; }
+  @keyframes flashAnim { 0% { opacity: 1; } 100% { opacity: 0; } }
+
+  /* ================= 12. ТЕЛЕФОН / ЗВОНКИ ================= */
+  #phone-screen {
+    background: #000; z-index: 1050; padding: 0; justify-content: flex-start;
+    background-image: linear-gradient(to bottom, #1e293b, #0f172a);
+  }
+  
+  .phone-header { width: 100%; padding: 20px 20px 20px 20px; text-align: left; border-bottom: 1px solid #334155;}
+  .phone-header h2 { font-size: 2em; font-weight: bold; color: white; margin-bottom: 10px;}
+  .phone-tabs { display: flex; gap: 20px; font-size: 0.9em; color: #94a3b8; font-weight: bold;}
+  .phone-tabs span.active { color: #3b82f6; border-bottom: 2px solid #3b82f6; padding-bottom: 5px;}
+  
+  .recent-calls { width: 100%; display: flex; flex-direction: column; margin-bottom: 60px;}
+  .call-item { display: flex; align-items: center; padding: 15px 20px; border-bottom: 1px solid #1e293b; cursor: pointer; transition: background 0.2s;}
+  .call-item:active { background: rgba(255,255,255,0.1);}
+  .call-icon { width: 40px; height: 40px; border-radius: 50%; background: #334155; display: flex; justify-content: center; align-items: center; font-size: 1.2em; margin-right: 15px; color: #94a3b8;}
+  .call-icon.missed { color: #ef4444; background: rgba(239,68,68,0.1);}
+  .call-info { display: flex; flex-direction: column; text-align: left; flex: 1;}
+  .call-name { font-size: 1.1em; color: white; font-weight: bold;}
+  .call-detail { font-size: 0.8em; color: #64748b; margin-top: 2px;}
+  .call-time { font-size: 0.8em; color: #64748b;}
+
+  /* Экран активного вызова */
+  #active-call-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(135deg, #1e3a8a, #0f172a); z-index: 1100;
+    display: none; flex-direction: column; justify-content: space-between; align-items: center; padding: 60px 20px 40px 20px;
+  }
+  #active-call-overlay.active { display: flex; animation: fadeIn 0.3s;}
+  
+  .caller-info { display: flex; flex-direction: column; align-items: center; gap: 15px;}
+  .caller-avatar { width: 100px; height: 100px; border-radius: 50%; background: #ec4899 url('liza.jpg') center/cover; box-shadow: 0 10px 30px rgba(236,72,153,0.5);}
+  .caller-name { font-size: 2em; font-weight: bold; color: white;}
+  .caller-status { font-size: 1em; color: #94a3b8;}
+  
+  .call-timer { font-family: monospace; font-size: 1.2em; color: #cbd5e1; margin-top: 5px; letter-spacing: 2px;}
+  
+  .call-dialogue-box { 
+    width: 100%; min-height: 140px; background: rgba(0,0,0,0.5); border-radius: 20px; padding: 20px; 
+    border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px;
+  }
+  .call-dialogue-text { font-size: 1.1em; line-height: 1.5; color: #e2e8f0; text-align: center; font-style: italic; transition: opacity 0.3s;}
+  
+  .call-actions { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%;}
+  
+  .call-response-btn {
+    background: #22c55e; color: white; border: none; border-radius: 30px; padding: 15px 30px;
+    font-size: 1.1em; font-weight: bold; cursor: pointer; width: 80%; box-shadow: 0 10px 20px rgba(34,197,94,0.4);
+    display: none; animation: slideUp 0.3s forwards;
+  }
+  .call-response-btn.show { display: block; }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .end-call-btn { 
+    width: 70px; height: 70px; border-radius: 50%; background: #ef4444; border: none; 
+    display: flex; justify-content: center; align-items: center; font-size: 2em; color: white; cursor: pointer;
+    box-shadow: 0 10px 20px rgba(239,68,68,0.4); transition: transform 0.2s;
+  }
+  .end-call-btn:active { transform: scale(0.9); }
+
+  /* ================= 13. СТАТИСТИКА ================= */
+  #stats-screen {
+    background: #000; z-index: 1080; justify-content: center; padding: 30px;
+    background-image: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #000 80%);
+  }
+  
+  .stats-title { font-size: 2em; font-weight: 800; color: #fbbf24; margin-bottom: 30px; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 0 20px rgba(251,191,36,0.5);}
+  
+  .stats-list { display: flex; flex-direction: column; gap: 15px; width: 100%; max-width: 300px; margin-bottom: 40px;}
+  .stat-row { display: flex; justify-content: space-between; font-size: 1.1em; color: #cbd5e1; border-bottom: 1px dashed #334155; padding-bottom: 8px;}
+  .stat-row span:last-child { font-weight: bold; color: white;}
+
+  /* ================= 14. СЕРТИФИКАТ ================= */
+  #cert-screen {
+    background: #000; z-index: 1080; justify-content: center; padding: 30px;
+    background-image: radial-gradient(circle at 50% 50%, #1e1b4b 0%, #000 80%);
+  }
+
+  .final-message { 
+    font-size: 1.5em; font-weight: bold; color: #ec4899; text-align: center; margin-bottom: 30px; 
+    opacity: 0; transform: translateY(20px); transition: all 0.8s ease;
+  }
+  .final-message.show { opacity: 1; transform: translateY(0); }
+
+  .new-cert-container { 
+    opacity: 0; transform: scale(0.9); transition: all 1s ease; 
+    width: 100%; display: flex; flex-direction: column; align-items: center;
+  }
+  .new-cert-container.show { opacity: 1; transform: scale(1); }
+
+  /* Утилиты */
+  .btn { background: linear-gradient(135deg, #ec4899, #be185d); color: white; border: none; padding: 16px 30px; border-radius: 30px; font-weight: 800; font-size: 1.1em; cursor: pointer; font-family: 'Comfortaa', sans-serif; box-shadow: 0 10px 25px rgba(236,72,153,0.4); transition: all 0.2s; width: 100%; text-transform: uppercase; letter-spacing: 1px; touch-action: manipulation;}
+  .btn:active { transform: scale(0.95); }
+  .btn-orange { background: linear-gradient(135deg, #f59e0b, #ea580c); box-shadow: 0 10px 25px rgba(234,88,12,0.4); }
+  .btn-blue { background: linear-gradient(135deg, #3b82f6, #1d4ed8); box-shadow: 0 10px 25px rgba(59,130,246,0.4); }
+
+  .toast { position: absolute; top: 10%; left: 50%; transform: translate(-50%, -20px); background: rgba(239, 68, 68, 0.95); color: white; padding: 12px 20px; border-radius: 12px; font-weight: bold; font-size: 0.9em; z-index: 2000; opacity: 0; pointer-events: none; transition: all 0.3s; box-shadow: 0 10px 20px rgba(0,0,0,0.5); border: 1px solid #fca5a5; text-align: center; width: max-content; max-width: 85%; line-height: 1.4; }
+  .toast.show { transform: translate(-50%, 0); opacity: 1; }
+  .toast.success { background: rgba(34, 197, 94, 0.95); border-color: #86efac; }
+
+  .certificate { background: linear-gradient(135deg, #fffdf5, #fef3c7); color: #333; border-radius: 16px; padding: 25px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.6), inset 0 0 0 4px #fbbf24, inset 0 0 0 8px #fff; position: relative; transform: rotate(-2deg); }
+  .cert-header { color: #b45309; font-family: 'Pacifico', cursive; font-size: 1.6em; margin-bottom: 10px; }
+  .cert-text { color: #475569; font-size: 0.9em; line-height: 1.4; margin-bottom: 15px; }
+  .cert-title { color: #d6336c; font-size: 1.2em; font-weight: 800; margin: 15px 0; }
+  .cert-seal { width: 60px; height: 60px; background: #ef4444; border-radius: 50%; margin: 0 auto; display: flex; justify-content: center; align-items: center; color: #ffd700; font-size: 1.8em; border: 3px dashed #fff; transform: rotate(-15deg); box-shadow: 0 5px 15px rgba(239,68,68,0.4);}
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+
+<div class="device-container">
+  <div id="fade-overlay"></div>
+  <div id="toast" class="toast"></div>
+
+  <!-- 1. РАБОЧИЙ СТОЛ -->
+  <div class="screen active" id="os-screen">
+    <div class="os-status-bar">
+      <span id="osTime">21:41</span>
+      <span>📶 LTE 🔋 46%</span>
+    </div>
+
+    <div class="os-notifications-container">
+      <div class="os-notification show" id="osNotifGas" onclick="openApp()">
+        <div class="notif-header"><span>СИСТЕМА 112</span><span>сейчас</span></div>
+        <div class="notif-title">⚠️ Запах газа!</div>
+        <div class="notif-text">ул. Ленина, д. 12. Требуется выезд бригады.</div>
+      </div>
+
+      <div class="os-notification" id="osNotifGas2" onclick="openApp()">
+        <div class="notif-header"><span>СИСТЕМА 112</span><span>сейчас</span></div>
+        <div class="notif-title">⚠️ Замена счетчика!</div>
+        <div class="notif-text">ул. Лазо 129, д2, 3 подъезд, кв 61.</div>
+      </div>
+
+      <div class="os-notification" id="osNotifTg" onclick="openTelegramApp()">
+        <div class="tg-notif-header">
+          <div class="tg-notif-app">
+            <div class="tg-icon-bg-sm">✈️</div>
+            <span>TELEGRAM</span>
+          </div>
+          <span>сейчас</span>
+        </div>
+        <div class="tg-notif-body">
+          <div class="tg-notif-avatar"></div>
+          <div class="tg-notif-content">
+            <div class="tg-notif-title">Царевна лягушка</div>
+            <div class="tg-notif-text">Как там твои дела?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="os-home">
+      <div class="app-icon-container" onclick="openApp()">
+        <div class="app-icon icon-gas">🔥</div>
+        <div class="app-name">Газ-Сервис</div>
+        <div class="unread-badge-os" id="gasBadgeOS">1</div>
+      </div>
+      
+      <div class="app-icon-container" onclick="openNotes()">
+        <div class="app-icon icon-notes">📝</div>
+        <div class="app-name">Заметки</div>
+      </div>
+
+      <div class="app-icon-container" onclick="openTelegramApp()">
+        <div class="app-icon icon-tg">✈️</div>
+        <div class="app-name">Telegram</div>
+        <div class="unread-badge-os" id="tgBadgeOS">1</div>
+      </div>
+    </div>
+
+    <div class="hint-text" id="osHint">Нажмите на уведомление или иконку «Газ-Сервис», чтобы начать</div>
+  </div>
+
+  <!-- 2. ЛОГИН -->
+  <div class="screen" id="app-login">
+    <div class="login-panel">
+      <div class="login-close" onclick="closeLogin()">✕</div>
+      <div class="login-title">Вход в систему</div>
+      <div class="input-group">
+        <label>Логин (Имя)</label>
+        <input type="text" class="login-input" id="loginName" placeholder="Введите имя...">
+      </div>
+      <div class="input-group">
+        <label>Пароль</label>
+        <input type="password" class="login-input" id="loginPass" placeholder="****" inputmode="numeric">
+      </div>
+      <div class="error-text" id="loginError"></div>
+      <button class="btn btn-orange" onclick="checkLogin()">Войти</button>
+    </div>
+  </div>
+
+  <!-- 3. ДИСПЕТЧЕРСКАЯ (ВЫЗОВ) -->
+  <div class="screen" id="app-dashboard">
+    <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 20px; color: #94a3b8;">Вызов</div>
+    
+    <div class="dispatch-card" id="dispatchCard1">
+      <div class="dispatch-header">
+        <span class="dispatch-tag">Срочно</span>
+        <span class="dispatch-time">21:42</span>
+      </div>
+      <div class="dispatch-address">ул. Ленина, д. 12</div>
+      <div class="dispatch-desc">Жильцы жалуются на сильный запах газа в подъезде. Необходимо проверить газовое оборудование и устранить утечку.</div>
+      <div class="dispatch-info-row"><span>Заявитель:</span> <span>Кв. 45 (Петров)</span></div>
+    </div>
+    
+    <div class="dispatch-card" id="dispatchCard2" style="display: none; border-color: #3b82f6; animation: none; box-shadow: 0 0 30px rgba(59,130,246,0.2);">
+      <div class="dispatch-header">
+        <span class="dispatch-tag" style="background: #3b82f6;">Плановый</span>
+        <span class="dispatch-time">08:00</span>
+      </div>
+      <div class="dispatch-address">ул. Лазо 129, д2</div>
+      <div class="dispatch-desc">Замена газового счетчика. 3 подъезд, кв 61. Жильцы дома.</div>
+      <div class="dispatch-info-row"><span>Заявитель:</span> <span>Кв. 61 (Сидорова)</span></div>
+    </div>
+    
+    <button class="btn btn-orange" style="max-width: 320px; margin-top: 10px;" id="startBtn" onclick="startGasGame()">ПРИНЯТЬ ВЫЗОВ</button>
+
+    <div class="complete-panel" id="completePanel">
+      <label class="checkbox-row">
+        <input type="checkbox" id="leakCheck" onchange="checkCompleteBtn()">
+        <span id="checkText">Заменить прокладку (утечка устранена)</span>
+      </label>
+      <button class="btn btn-blue" id="finishBtn" onclick="finishCall()" disabled style="opacity:0.5;">ЗАВЕРШИТЬ ВЫЗОВ</button>
+    </div>
+
+    <div class="hint-text" id="dashHint">Нажмите «ПРИНЯТЬ ВЫЗОВ», чтобы отправиться на задание</div>
+  </div>
+
+  <!-- 4. ГАЗ (УТЕЧКА) -->
+  <div class="screen" id="gas-screen">
+    <div class="gas-hud">
+      <div class="gas-task" id="gasTaskTitle">ЭТАП 1: ПОИСК УТЕЧКИ</div>
+      <div class="gas-status"><span class="status-dot"></span> <span id="gasStatusText">ОПАСНО</span></div>
+    </div>
+
+    <div class="scene-container" id="gasScene">
+      <div class="room-bg"></div>
+      <div class="pipes-bg" id="pipesBg">
+        <div class="pipe-h" style="top: 20%;"></div>
+        <div class="pipe-h" style="top: 50%;"></div>
+        <div class="pipe-h" style="top: 80%;"></div>
+        <div class="pipe-v" style="left: 20%;"></div>
+        <div class="pipe-v" style="left: 50%;"></div>
+        <div class="pipe-v" style="left: 80%;"></div>
+        
+        <div class="flange-node" style="top: 20%; left: 20%;"></div>
+        <div class="flange-node" style="top: 20%; left: 50%;"></div>
+        <div class="flange-node" style="top: 20%; left: 80%;"></div>
+        <div class="flange-node" style="top: 50%; left: 20%;"></div>
+        <div class="flange-node" style="top: 50%; left: 50%;"></div>
+        <div class="flange-node" style="top: 50%; left: 80%;"></div>
+        <div class="flange-node" style="top: 80%; left: 20%;"></div>
+        <div class="flange-node" style="top: 80%; left: 50%;"></div>
+        <div class="flange-node" style="top: 80%; left: 80%;"></div>
+      </div>
+
+      <div id="drag-analyzer">
+        <div class="analyzer-screen">
+          <div class="analyzer-val" id="analyzerVal">0.0%</div>
+          <div class="analyzer-status" id="analyzerStatus">ПОИСК...</div>
+        </div>
+        <div class="analyzer-grip"></div>
+      </div>
+
+      <div class="overlay-stage" id="stage-valve">
+        <h2 style="color:white; margin-bottom:20px; font-size:1.5em;">Перекройте подачу газа!</h2>
+        <div class="valve-turner" id="valveTurner">
+          <div class="valve-center"></div>
+        </div>
+        <h3 style="color:#fbbf24; margin-top:20px; font-size:1.3em;" id="valveCount">Обороты: 0/3</h3>
+      </div>
+
+      <div class="overlay-stage" id="repairUI">
+        <h2 style="color:white; margin-bottom:20px; font-size:1.3em;" id="repairText">Открутите болты (влево)!</h2>
+        
+        <div class="flange-repair" id="flangeContainer">
+          <div class="gasket gasket-old" id="gasketOld"></div>
+          <div class="bolt bolt-1" id="bolt1"></div>
+          <div class="bolt bolt-2" id="bolt2"></div>
+          <div class="bolt bolt-3" id="bolt3"></div>
+          <div class="bolt bolt-4" id="bolt4"></div>
+        </div>
+        
+        <div class="gasket gasket-new" id="gasketNew"></div>
+      </div>
+    </div>
+
+    <div class="hint-text" id="gasHint">Перетаскивайте газоанализатор по трубам. Держите его рядом с утечкой, пока полоска не заполнится.</div>
+  </div>
+
+  <!-- 5. ЗАМЕНА СЧЕТЧИКА -->
+  <div class="screen" id="meter-screen">
+    <div class="meter-hud">
+      <div class="meter-task" id="meterTaskText">ШАГ 1: ПЕРЕКРОЙТЕ ГАЗ</div>
+    </div>
+    
+    <div class="meter-scene">
+      <div class="m-pipe-top"></div>
+      <div class="m-pipe-bottom"></div>
+      
+      <div class="m-valve-base">
+        <div class="m-valve-lever" id="mValve" onclick="toggleMeterValve()"></div>
+      </div>
+
+      <div class="meter-body old" id="oldMeter" onclick="removeOldMeter()">
+        <div class="meter-screen-display"><div class="meter-digits">84621</div></div>
+        <div class="meter-dial"></div>
+        <div style="font-size:0.6em; color:#fff; margin-top:5px; font-weight:bold;">СТАРЫЙ</div>
+      </div>
+
+      <div class="meter-body new" id="newMeter">
+        <div class="meter-screen-display"><div class="meter-digits">00000</div></div>
+        <div class="meter-dial"></div>
+        <div style="font-size:0.6em; color:#0f172a; margin-top:5px; font-weight:bold;">НОВЫЙ</div>
+      </div>
+
+      <div class="hose-wrapper" id="mHose" onclick="openHoseZoom()">
+        <div class="hose-nut"></div>
+        <div class="hose-tube"></div>
+      </div>
+
+      <div class="m-analyzer" id="mAnalyzer" onpointerdown="startMeterAnalyzer(event)">
+        <div class="m-analyzer-screen">
+          <div class="scan-line"></div>
+          <div class="m-analyzer-val">0.0%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="paper-overlay" id="paperOverlay">
+      <div class="paper-sheet">
+        <h3>Акт выполненных работ</h3>
+        <p style="font-size: 0.8em;">Показания старого счетчика:</p>
+        <div class="paper-digits">84621</div>
+        <button class="btn btn-orange" onclick="confirmPaper()" style="padding: 10px; font-size: 0.9em;">ЗАПИСАТЬ</button>
+      </div>
+    </div>
+
+    <div id="hose-zoom">
+      <div class="zoom-scene">
+        <div class="zoom-pipe"></div>
+        <div class="zoom-nut-container" id="zoomNutContainer">
+          <div class="zoom-nut-body" id="zoomNutBody"></div>
+        </div>
+        <div class="zoom-hose-tube" id="zoomHoseTube"></div>
+      </div>
+    </div>
+
+    <div class="hint-text" id="meterHint">Нажмите на рычаг, чтобы перекрыть газ</div>
+  </div>
+
+  <!-- 6. БУДИЛЬНИК -->
+  <div id="alarm-screen">
+    <div class="alarm-icon">⏰</div>
+    <div class="alarm-title">Рабочая смена окончена</div>
+    <button class="alarm-btn" onclick="goHome()">ВЫКЛЮЧИТЬ</button>
+  </div>
+
+  <!-- 7. "ВЫ ОТПРАВИЛИСЬ ДОМОЙ" (ЭКРАН ПАУЗЫ) -->
+  <div id="black-screen">
+    <div class="pause-text">Через некоторое время...</div>
+  </div>
+
+  <!-- 8. СБОР СУМКИ -->
+  <div class="screen" id="gymbag-screen">
+    <div class="locker-room"></div>
+    <div class="neon-light"></div>
+    <div class="bench"></div>
+    
+    <div class="bag-title">Что взять в спортзал?</div>
+    
+    <div class="target-list">
+      <div class="target-item" id="target-water">🥤</div>
+      <div class="target-item" id="target-towel">🧻</div>
+      <div class="target-item" id="target-headphones">🎧</div>
+    </div>
+    
+    <div class="bag-container" id="bagZone">
+      <div class="bag-handle"></div>
+      <div class="bag-body">
+        <div class="bag-zipper"></div>
+      </div>
+    </div>
+
+    <div class="locker-grid" id="lockerGrid">
+      <div class="bag-item" data-id="water" data-correct="true" onpointerdown="startBagDrag(event)"><div class="emoji">🥤</div><span>Бутылка</span></div>
+      <div class="bag-item" data-id="towel" data-correct="true" onpointerdown="startBagDrag(event)"><div class="emoji">🧻</div><span>Полотенце</span></div>
+      <div class="bag-item" data-id="headphones" data-correct="true" onpointerdown="startBagDrag(event)"><div class="emoji">🎧</div><span>Наушники</span></div>
+      
+      <div class="bag-item" data-id="pizza" data-correct="false" onpointerdown="startBagDrag(event)"><div class="emoji">🍕</div><span>Пицца</span></div>
+      <div class="bag-item" data-id="laptop" data-correct="false" onpointerdown="startBagDrag(event)"><div class="emoji">💻</div><span>Ноутбук</span></div>
+      <div class="bag-item" data-id="beer" data-correct="false" onpointerdown="startBagDrag(event)"><div class="emoji">🍺</div><span>Пиво</span></div>
+    </div>
+
+    <div class="hint-text">Перетащите в сумку предметы, указанные в списке сверху</div>
+  </div>
+
+  <!-- 9. TELEGRAM ЧАТ -->
+  <div id="tg-chat">
+    <div class="tg-window">
+      <div class="tg-chat-header">
+        <div class="tg-back" onclick="closeTelegramChat()">‹</div>
+        <div class="tg-chat-avatar"></div>
+        <div class="tg-chat-info">
+          <div class="tg-chat-name">Царевна лягушка</div>
+          <div class="tg-chat-status" id="tgChatStatus">в сети</div>
+        </div>
+      </div>
+      <div class="tg-chat-messages" id="tgChatMessages"></div>
+    </div>
+  </div>
+
+  <!-- 10. ЗАМЕТКИ -->
+  <div id="notes-modal">
+    <div class="notes-paper">
+      <h3>📄 Мои пароли.txt</h3>
+      <p><b>Telegram:</b> sashka_love / qwerty123</p>
+      <p><b>ВКонтакте:</b> sasha@mail.ru / 12345678</p>
+      <p><b>Банк:</b> 5536 **** **** 1234 / 9090</p>
+      <p style="margin-top: 20px; border-top: 1px dashed #999; padding-top: 10px; color: #b45309;">
+        <b>Приложение "Газ-Сервис":</b><br>
+        Логин: <b>саша</b><br>
+        Пароль: <b>день, месяц, год начала отношений</b>
+      </p>
+      <button class="close-notes" onclick="closeNotes()">Закрыть</button>
+    </div>
+  </div>
+
+  <!-- 11. КАЧАЛКА -->
+  <div class="screen" id="gym-screen">
+    
+    <div class="gym-header">
+      <div class="gym-lives" id="gymLives">❤️❤️❤️</div>
+      
+      <div class="pulse-monitor">
+        <div class="pulse-icon" id="pulseIcon">💓</div>
+        <div class="ekg-container">
+          <div class="ekg-line" id="ekgLine"></div>
+        </div>
+        <div class="pulse-value" id="pulseValue">70</div>
+      </div>
+    </div>
+
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <div class="gym-weight" id="gymWeight">60</div>
+      <div class="gym-reps">Подход: <span id="gymSet">1</span>/3 &nbsp;|&nbsp; Повторы: <span id="gymReps">0</span>/5</div>
+    </div>
+
+    <div class="barbell-container" id="barbellContainer">
+      <div class="barbell-graphic">
+        <div class="plate left" id="plateLeft" data-weight="60"></div>
+        <div class="bar"></div>
+        <div class="plate right" id="plateRight" data-weight="60"></div>
+      </div>
+    </div>
+
+    <div class="control-panel">
+      <div class="timing-bar-wrapper">
+        <div class="timing-bar-container">
+          <div class="timing-zone" id="timingZone"></div>
+          <div class="timing-indicator" id="timingIndicator"></div>
+        </div>
+      </div>
+      
+      <button class="push-btn" id="pushBtn">ЖАТЬ!</button>
+      <button class="rest-btn" id="restBtn">ПЕРЕДОХНУТЬ</button>
+    </div>
+    
+    <div class="screen-flash" id="screenFlash"></div>
+    
+    <div class="hint-text">Жмите в зеленой зоне! Если пульс выше 150, нажмите «ПЕРЕДОХНУТЬ»</div>
+  </div>
+
+  <!-- 12. ТЕЛЕФОН (ЗВОНКИ) -->
+  <div class="screen" id="phone-screen">
+    <div class="phone-header">
+      <h2>Недавние</h2>
+      <div class="phone-tabs">
+        <span>Все</span>
+        <span class="active">Пропущенные</span>
+      </div>
+    </div>
+    
+    <div class="recent-calls">
+      <div class="call-item">
+        <div class="call-icon">👤</div>
+        <div class="call-info"><span class="call-name">Максик</span><span class="call-detail">Мобильный</span></div>
+        <div class="call-time">Вчера</div>
+      </div>
+      <div class="call-item">
+        <div class="call-icon">👤</div>
+        <div class="call-info"><span class="call-name">Максим</span><span class="call-detail">Рабочий</span></div>
+        <div class="call-time">10:30</div>
+      </div>
+      <div class="call-item">
+        <div class="call-icon missed">📞</div>
+        <div class="call-info"><span class="call-name" style="color:#ef4444;">кореш</span><span class="call-detail">Пропущенный</span></div>
+        <div class="call-time">18:15</div>
+      </div>
+      <div class="call-item">
+        <div class="call-icon">👤</div>
+        <div class="call-info"><span class="call-name">Масик</span><span class="call-detail">Мобильный</span></div>
+        <div class="call-time">Вчера</div>
+      </div>
+      <div class="call-item" onclick="startCall()" style="background: rgba(236,72,153,0.1); border-left: 4px solid #ec4899;">
+        <div class="call-icon" style="color:#ec4899; background: rgba(236,72,153,0.2);">❤️</div>
+        <div class="call-info"><span class="call-name" style="color:#ec4899;">Царевна лягушка</span><span class="call-detail">Мобильный</span></div>
+        <div class="call-time">Сейчас</div>
+      </div>
+    </div>
+
+    <div class="hint-text">Позвони «царевне лягушке»</div>
+  </div>
+
+  <!-- 13. АКТИВНЫЙ ЗВОНОК -->
+  <div id="active-call-overlay">
+    <div class="caller-info">
+      <div class="caller-avatar"></div>
+      <div class="caller-name">Царевна лягушка</div>
+      <div class="caller-status" id="callStatus">Вызов...</div>
+      <div class="call-timer" id="callTimer">00:00</div>
+    </div>
+    
+    <div class="call-dialogue-box">
+      <div class="call-dialogue-text" id="callDialogue"></div>
+    </div>
+    
+    <div class="call-actions">
+      <button class="call-response-btn" id="callResponseBtn" onclick="respondToCall()">Уже лечу домой!</button>
+      <button class="end-call-btn" onclick="endCall()">📞</button>
+    </div>
+  </div>
+
+  <!-- 14. СТАТИСТИКА -->
+  <div class="screen" id="stats-screen">
+    <div class="stats-title">День закончен</div>
+    
+    <div class="stats-list">
+      <div class="stat-row"><span>Помыл машину:</span> <span>1 раз</span></div>
+      <div class="stat-row"><span>Позвал с собой в зал:</span> <span>10 раз</span></div>
+      <div class="stat-row"><span>Позвонил Максиму:</span> <span>15 раз</span></div>
+      <div class="stat-row"><span>Поел:</span> <span>50 раз</span></div>
+      <div class="stat-row"><span>Позвонил Лизе:</span> <span>1 раз</span></div>
+    </div>
+
+    <button class="btn" style="margin-top: 10px; max-width: 300px;" onclick="showCertificate()">ДАЛЕЕ</button>
+  </div>
+
+  <!-- 15. СЕРТИФИКАТ -->
+  <div class="screen" id="cert-screen">
+    <div class="final-message show" id="finalMessage">Ну ладно, держи, заслужил...</div>
+
+    <div class="new-cert-container show" id="newCertContainer">
+      <div class="certificate">
+        <div class="cert-header">Сертификат</div>
+        <div class="cert-text">Официально подтверждается, что предъявитель сего заслужил:</div>
+        <div class="cert-title">Лиза не будет его бить<br>и обзывать целую неделю</div>
+        <div class="cert-text">Действительно до следующей ошибки.</div>
+        <div class="cert-seal">💖</div>
+      </div>
+      <button class="btn" style="margin-top: 25px;" onclick="location.reload()">Забрать приз 🎁</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ================= ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =================
+let currentCallStage = 1; 
+let isStoryAdvanced = false; 
+let chatStarted = false; 
+let meterStep = 1;
+let callTimerInterval;
+let callSeconds = 0;
+
+// ================= УТИЛИТЫ =================
+setInterval(() => {
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+  if(document.getElementById('osTime')) document.getElementById('osTime').textContent = timeStr;
+}, 1000);
+
+// Плавный переход (затемнение экрана)
+function transitionTo(callback) {
+  const overlay = document.getElementById('fade-overlay');
+  overlay.classList.add('active');
+  setTimeout(() => {
+    callback();
+    setTimeout(() => { overlay.classList.remove('active'); }, 150);
+  }, 600); 
+}
+
+function showToast(text, isSuccess = false) {
+  const toast = document.getElementById('toast');
+  toast.textContent = text;
+  toast.className = 'toast show' + (isSuccess ? ' success' : '');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function updateHints(text) {
+  const activeScreen = document.querySelector('.screen.active');
+  if(!activeScreen) return;
+  const hint = activeScreen.querySelector('.hint-text');
+  if(hint) hint.innerHTML = text;
+}
+
+// ================= ЗАМЕТКИ =================
+function openNotes() { document.getElementById('notes-modal').classList.add('active'); }
+function closeNotes() { document.getElementById('notes-modal').classList.remove('active'); }
+
+// ================= ПРИЛОЖЕНИЕ ГАЗ =================
+function openApp() {
+  transitionTo(() => {
+    document.getElementById('os-screen').classList.remove('active');
+    document.getElementById('app-login').classList.add('active');
+  });
+}
+
+function closeLogin() {
+  transitionTo(() => {
+    document.getElementById('app-login').classList.remove('active');
+    document.getElementById('os-screen').classList.add('active');
+  });
+}
+
+function checkLogin() {
+  const name = document.getElementById('loginName').value.trim().toLowerCase();
+  const pass = document.getElementById('loginPass').value.trim();
+  const err = document.getElementById('loginError');
+  
+  if ((name === 'саша' || name === 'сашка' || name === 'александр') && pass === '26102020') {
+    err.textContent = '';
+    transitionTo(() => {
+      document.getElementById('app-login').classList.remove('active');
+      document.getElementById('app-dashboard').classList.add('active');
+      
+      if(currentCallStage === 1) {
+        document.getElementById('dispatchCard1').style.display = 'block';
+        document.getElementById('dispatchCard2').style.display = 'none';
+        document.getElementById('checkText').textContent = "Заменить прокладку (утечка устранена)";
+        document.getElementById('dashHint').innerHTML = 'Нажмите «ПРИНЯТЬ ВЫЗОВ», чтобы отправиться на задание';
+      } else {
+        document.getElementById('dispatchCard1').style.display = 'none';
+        document.getElementById('dispatchCard2').style.display = 'block';
+        document.getElementById('checkText').textContent = "Замена счетчика выполнена";
+        document.getElementById('dashHint').innerHTML = 'Нажмите «ПРИНЯТЬ ВЫЗОВ», чтобы отправиться на задание';
+      }
+    });
+  } else {
+    err.textContent = 'Неверный логин или пароль! (подсказка в заметках)';
+    if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+    document.getElementById('loginName').style.borderColor = '#ef4444';
+    document.getElementById('loginPass').style.borderColor = '#ef4444';
+    setTimeout(() => { 
+      document.getElementById('loginName').style.borderColor = '#334155'; 
+      document.getElementById('loginPass').style.borderColor = '#334155'; 
+    }, 500);
+  }
+}
+
+// ================= СТАРТ ГАЗА / СЧЕТЧИКА =================
+function startGasGame() {
+  transitionTo(() => {
+    document.getElementById('app-dashboard').classList.remove('active');
+    
+    if(currentCallStage === 1) {
+      document.getElementById('gas-screen').classList.add('active');
+      initGasScanning();
+    } else {
+      document.getElementById('meter-screen').classList.add('active');
+      initMeterGame();
+    }
+  });
+}
+
+// ================= УТЕЧКА ГАЗА =================
+let leakSignal = 0;
+let leakFound = false;
+let leakNode = null;
+
+function initGasScanning() {
+  leakFound = false;
+  leakSignal = 0;
+  
+  const scene = document.getElementById('gasScene');
+  const analyzer = document.getElementById('drag-analyzer');
+  
+  document.getElementById('stage-valve').style.display = 'none';
+  document.getElementById('repairUI').style.display = 'none';
+  
+  const analyzerVal = document.getElementById('analyzerVal');
+  const analyzerStatus = document.getElementById('analyzerStatus');
+  analyzerVal.textContent = '0.0%';
+  analyzerVal.style.color = '#22c55e';
+  analyzerStatus.textContent = 'ПОИСК...';
+  analyzerStatus.style.color = '#aaa';
+
+  const pipesBg = document.getElementById('pipesBg');
+  pipesBg.style.transform = 'scale(1)';
+  pipesBg.style.transformOrigin = 'center center';
+  document.querySelectorAll('.flange-node').forEach(n => n.classList.remove('leak-node'));
+
+  const nodes = document.querySelectorAll('.flange-node');
+  leakNode = nodes[Math.floor(Math.random() * nodes.length)];
+
+  let isDragging = false;
+  let startX = 0, startY = 0;
+  let initialLeft = 0, initialTop = 0;
+
+  const newAnalyzer = analyzer.cloneNode(true);
+  analyzer.parentNode.replaceChild(newAnalyzer, analyzer);
+  const activeAnalyzer = document.getElementById('drag-analyzer');
+
+  // Очищаем старые слушатели
+  activeAnalyzer.onpointerdown = null;
+  document.removeEventListener('pointermove', moveAnalyzer);
+  document.removeEventListener('pointerup', endAnalyzer);
+  document.removeEventListener('pointercancel', endAnalyzer);
+
+  activeAnalyzer.addEventListener('pointerdown', (e) => {
+    e.preventDefault();
+    if (leakFound) return;
+    isDragging = true;
+    const aRect = activeAnalyzer.getBoundingClientRect();
+    initialLeft = aRect.left;
+    initialTop = aRect.top;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    // Привязываем события к документу для стабильности на Android
+    document.addEventListener('pointermove', moveAnalyzer);
+    document.addEventListener('pointerup', endAnalyzer);
+    document.addEventListener('pointercancel', endAnalyzer);
+  });
+
+  function moveAnalyzer(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    const sceneRect = scene.getBoundingClientRect();
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    
+    let newLeft = initialLeft + dx;
+    let newTop = initialTop + dy;
+    
+    newLeft = Math.max(0, Math.min(newLeft, sceneRect.width - activeAnalyzer.offsetWidth));
+    newTop = Math.max(0, Math.min(newTop, sceneRect.height - activeAnalyzer.offsetHeight));
+    
+    activeAnalyzer.style.left = newLeft + 'px';
+    activeAnalyzer.style.top = newTop + 'px';
+
+    if (!leakFound && leakNode) {
+      const ax = newLeft + activeAnalyzer.offsetWidth / 2;
+      const ay = newTop + activeAnalyzer.offsetHeight / 2;
+      
+      const lRect = leakNode.getBoundingClientRect();
+      const lx = lRect.left - sceneRect.left + lRect.width / 2;
+      const ly = lRect.top - sceneRect.top + lRect.height / 2;
+      
+      const dist = Math.hypot(ax - lx, ay - ly);
+      
+      if (dist < 130) {
+        let speed = dist < 60 ? 3 : (dist < 90 ? 1.5 : 0.5);
+        leakSignal += speed;
+        if (leakSignal > 100) leakSignal = 100;
+        
+        activeAnalyzer.querySelector('.analyzer-status').textContent = 'СИГНАЛ...';
+        activeAnalyzer.querySelector('.analyzer-status').style.color = '#eab308';
+      } else {
+        leakSignal -= 1;
+        if (leakSignal < 0) leakSignal = 0;
+        activeAnalyzer.querySelector('.analyzer-status').textContent = 'ПОИСК...';
+        activeAnalyzer.querySelector('.analyzer-status').style.color = '#aaa';
+      }
+      
+      activeAnalyzer.querySelector('.analyzer-val').textContent = leakSignal.toFixed(1) + '%';
+      activeAnalyzer.querySelector('.analyzer-val').style.color = leakSignal > 50 ? '#ef4444' : '#22c55e';
+      
+      if (leakSignal >= 100) {
+        triggerLeak(lx, ly);
+      }
+    }
+  }
+
+  function endAnalyzer(e) {
+    if (!isDragging) return;
+    isDragging = false;
+    document.removeEventListener('pointermove', moveAnalyzer);
+    document.removeEventListener('pointerup', endAnalyzer);
+    document.removeEventListener('pointercancel', endAnalyzer);
+  }
+}
+
+function triggerLeak(lx, ly) {
+  leakFound = true;
+  if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+  
+  leakNode.classList.add('leak-node');
+  const scene = document.getElementById('gasScene');
+  
+  for(let i=0; i<15; i++) {
+    setTimeout(() => {
+      const steam = document.createElement('div');
+      steam.className = 'steam';
+      steam.style.left = lx + 'px';
+      steam.style.top = ly + 'px';
+      steam.style.setProperty('--tx', (Math.random() - 0.5) * 80 + 'px');
+      scene.appendChild(steam);
+      setTimeout(() => steam.remove(), 1200);
+    }, i * 60);
+  }
+
+  setTimeout(() => {
+    document.getElementById('drag-analyzer').style.opacity = '0';
+    document.getElementById('gasTaskTitle').textContent = "ЭТАП 2: ПЕРЕКРЫТИЕ";
+    document.getElementById('stage-valve').style.display = 'flex';
+    updateHints("Крутите вентиль по часовой стрелке (вправо), чтобы перекрыть газ");
+    initValveTurning();
+  }, 1200);
+}
+
+// ================= КРАН =================
+let currentValveAngle = 0;
+let lastAngle = 0;
+let isValveDragging = false;
+
+function initValveTurning() {
+  const valve = document.getElementById('valveTurner');
+  const countText = document.getElementById('valveCount');
+  
+  currentValveAngle = 0;
+  countText.textContent = `Обороты: 0/3`;
+  valve.style.transform = `rotate(0deg)`;
+  
+  valve.onpointerdown = (e) => {
+    e.preventDefault();
+    isValveDragging = true;
+    const rect = valve.getBoundingClientRect();
+    lastAngle = Math.atan2(e.clientY - (rect.top + rect.height/2), e.clientX - (rect.left + rect.width/2)) * (180 / Math.PI);
+    valve.setPointerCapture(e.pointerId);
+  };
+
+  valve.onpointermove = (e) => {
+    if (!isValveDragging) return;
+    e.preventDefault();
+    
+    const rect = valve.getBoundingClientRect();
+    const angle = Math.atan2(e.clientY - (rect.top + rect.height/2), e.clientX - (rect.left + rect.width/2)) * (180 / Math.PI);
+    
+    let diff = angle - lastAngle;
+    if (diff > 180) diff -= 360;
+    if (diff < -180) diff += 360;
+    
+    if (diff > 0) {
+      currentValveAngle += diff;
+      valve.style.transform = `rotate(${currentValveAngle}deg)`;
+      
+      let turns = Math.floor(currentValveAngle / 360);
+      if (turns > 3) turns = 3;
+      countText.textContent = `Обороты: ${turns}/3`;
+      
+      if (currentValveAngle >= 1080) {
+        isValveDragging = false;
+        document.getElementById('stage-valve').style.display = 'none';
+        document.getElementById('gasTaskTitle').textContent = "ЭТАП 3: РЕМОНТ ПРОКЛАДКИ";
+        document.getElementById('repairUI').style.display = 'flex';
+        updateHints("Сначала открутите все 4 болта. Потом вытащите старую прокладку и поставьте новую.");
+        initRepairStage();
+      }
+    }
+    lastAngle = angle;
+  };
+
+  valve.onpointerup = (e) => {
+    isValveDragging = false;
+    valve.releasePointerCapture(e.pointerId);
+  };
+}
+
+// ================= РЕМОНТ ПРОКЛАДКИ =================
+let boltsDone = 0;
+let isScrewingIn = false;
+
+function initRepairStage() {
+  boltsDone = 0;
+  isScrewingIn = false;
+  document.getElementById('repairText').textContent = 'Открутите болты (влево)!';
+  
+  const oldGasket = document.getElementById('gasketOld');
+  oldGasket.classList.remove('removed');
+  oldGasket.style.display = 'block';
+  oldGasket.style.transform = 'none';
+  
+  const newGasket = document.getElementById('gasketNew');
+  newGasket.classList.remove('visible', 'placed');
+  newGasket.style.display = 'none';
+  newGasket.style.position = 'fixed';
+  
+  const flange = document.getElementById('flangeContainer');
+  if(newGasket.parentElement !== flange) {
+     flange.appendChild(newGasket);
+  }
+
+  document.querySelectorAll('.bolt').forEach(b => {
+    b.classList.remove('done');
+    b.dataset.angle = 0;
+    b.dataset.done = 'false';
+    b.style.transform = 'rotate(0deg)';
+    
+    b.onpointerdown = (e) => startBoltTurn(e, b);
+    b.onpointermove = (e) => moveBoltTurn(e, b);
+    b.onpointerup = (e) => endBoltTurn(e, b);
+  });
+
+  initGasketDrag();
+}
+
+function startBoltTurn(e, b) {
+  if (b.dataset.done === 'true') return;
+  e.preventDefault();
+  b.dataset.dragging = 'true';
+  const rect = b.getBoundingClientRect();
+  b.dataset.lastAngle = Math.atan2(e.clientY - (rect.top + rect.height/2), e.clientX - (rect.left + rect.width/2)) * (180 / Math.PI);
+  b.setPointerCapture(e.pointerId);
+}
+
+function moveBoltTurn(e, b) {
+  if (b.dataset.dragging !== 'true' || b.dataset.done === 'true') return;
+  e.preventDefault();
+  
+  const rect = b.getBoundingClientRect();
+  const angle = Math.atan2(e.clientY - (rect.top + rect.height/2), e.clientX - (rect.left + rect.width/2)) * (180 / Math.PI);
+  const last = parseFloat(b.dataset.lastAngle);
+  
+  let diff = angle - last;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+  
+  let isValidMove = isScrewingIn ? (diff > 0) : (diff < 0);
+  
+  if (isValidMove) {
+    let currAngle = parseFloat(b.dataset.angle || 0) + diff;
+    b.style.transform = `rotate(${currAngle}deg)`;
+    b.dataset.angle = currAngle;
+    
+    if (Math.abs(currAngle) >= 360) {
+      b.dataset.done = 'true';
+      b.classList.add('done');
+      boltsDone++;
+      if (navigator.vibrate) navigator.vibrate(30);
+      
+      if (boltsDone === 4 && !isScrewingIn) {
+        document.getElementById('repairText').textContent = 'Вытяните старую прокладку!';
+        updateHints("Вытяните красную прокладку в сторону и перетащите зеленую на ее место.");
+      }
+      
+      if (boltsDone === 4 && isScrewingIn) {
+        document.getElementById('repairText').textContent = 'Ремонт завершен!';
+        document.querySelector('.gas-status').innerHTML = '<span class="status-dot" style="background:#22c55e; box-shadow: 0 0 10px #22c55e;"></span> УСТРАНЕНО';
+        document.querySelector('.gas-status').style.color = '#22c55e';
+        
+        setTimeout(() => {
+          transitionTo(() => {
+            document.getElementById('gas-screen').classList.remove('active');
+            returnToTablet();
+          });
+        }, 1500);
+      }
+    }
+  }
+  b.dataset.lastAngle = angle;
+}
+
+function endBoltTurn(e, b) {
+  b.dataset.dragging = 'false';
+  if (b.releasePointerCapture) b.releasePointerCapture(e.pointerId);
+}
+
+// ===== ИСПРАВЛЕННЫЙ DRAG ДЛЯ ПРОКЛАДОК (СТАБИЛЬНО НА ANDROID) =====
+function initGasketDrag() {
+  const oldGasket = document.getElementById('gasketOld');
+  const newGasket = document.getElementById('gasketNew');
+  const flange = document.getElementById('flangeContainer');
+
+  let isDraggingOld = false;
+  let isDraggingNew = false;
+  let startX = 0, startY = 0;
+
+  // Очищаем старые слушатели
+  document.removeEventListener('pointermove', moveOldGasket);
+  document.removeEventListener('pointerup', endOldGasket);
+  document.removeEventListener('pointercancel', endOldGasket);
+  document.removeEventListener('pointermove', moveNewGasket);
+  document.removeEventListener('pointerup', endNewGasket);
+  document.removeEventListener('pointercancel', endNewGasket);
+
+  // --- Логика для старой (красной) прокладки ---
+  oldGasket.onpointerdown = (e) => {
+    if (boltsDone < 4 || isScrewingIn) return;
+    e.preventDefault();
+    isDraggingOld = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    
+    oldGasket.style.transition = 'none'; // Отключаем плавность при перетаскивании
+    oldGasket.style.zIndex = "999";
+    document.addEventListener('pointermove', moveOldGasket);
+    document.addEventListener('pointerup', endOldGasket);
+    document.addEventListener('pointercancel', endOldGasket);
+  };
+
+  function moveOldGasket(e) {
+    if (!isDraggingOld) return;
+    e.preventDefault();
+    let dx = e.clientX - startX;
+    let dy = e.clientY - startY;
+    oldGasket.style.transform = `translate(${dx}px, ${dy}px)`;
+  }
+
+  function endOldGasket(e) {
+    if (!isDraggingOld) return;
+    isDraggingOld = false;
+    document.removeEventListener('pointermove', moveOldGasket);
+    document.removeEventListener('pointerup', endOldGasket);
+    document.removeEventListener('pointercancel', endOldGasket);
+
+    let dx = e.clientX - startX;
+    let dy = e.clientY - startY;
+
+    if (Math.abs(dx) > 50 || Math.abs(dy) > 50) {
+      // Успешно сняли
+      oldGasket.style.transition = 'all 0.3s';
+      oldGasket.classList.add('removed');
+      document.getElementById('repairText').textContent = 'Установите новую прокладку!';
+      updateHints("Перетащите зеленую прокладку в центр фланца.");
+      
+      // Показываем новую
+      newGasket.style.display = 'block';
+      newGasket.classList.add('visible');
+      newGasket.style.position = 'fixed';
+      newGasket.style.bottom = '40px';
+      newGasket.style.left = '50%';
+      newGasket.style.marginLeft = '-40px';
+      newGasket.style.marginTop = '0';
+      newGasket.style.top = 'auto';
+      newGasket.style.width = '80px';
+      newGasket.style.height = '80px';
+      newGasket.style.transform = 'none';
+    } else {
+      // Возврат на место
+      oldGasket.style.transition = 'transform 0.3s';
+      oldGasket.style.transform = 'none';
+    }
+  }
+
+  // --- Логика для новой (зеленой) прокладки ---
+  newGasket.onpointerdown = (e) => {
+    if (!newGasket.classList.contains('visible') || newGasket.classList.contains('placed')) return;
+    e.preventDefault();
+    isDraggingNew = true;
+    newGasket.style.transition = 'none';
+    newGasket.style.zIndex = "999";
+    
+    // Сразу переводим в fixed и ставим под палец
+    newGasket.style.bottom = 'auto';
+    newGasket.style.marginLeft = '0';
+    newGasket.style.marginTop = '0';
+    newGasket.style.width = '140px';
+    newGasket.style.height = '140px';
+    newGasket.style.left = (e.clientX - 70) + 'px';
+    newGasket.style.top = (e.clientY - 70) + 'px';
+
+    document.addEventListener('pointermove', moveNewGasket);
+    document.addEventListener('pointerup', endNewGasket);
+    document.addEventListener('pointercancel', endNewGasket);
+  };
+
+  function moveNewGasket(e) {
+    if (!isDraggingNew) return;
+    e.preventDefault();
+    newGasket.style.left = (e.clientX - 70) + 'px';
+    newGasket.style.top = (e.clientY - 70) + 'px';
+  }
+
+  function endNewGasket(e) {
+    if (!isDraggingNew) return;
+    isDraggingNew = false;
+    document.removeEventListener('pointermove', moveNewGasket);
+    document.removeEventListener('pointerup', endNewGasket);
+    document.removeEventListener('pointercancel', endNewGasket);
+
+    const fRect = flange.getBoundingClientRect();
+    const nRect = newGasket.getBoundingClientRect();
+
+    const isInside = (
+      nRect.left + nRect.width/2 > fRect.left + 20 && nRect.left + nRect.width/2 < fRect.right - 20 &&
+      nRect.top + nRect.height/2 > fRect.top + 20 && nRect.top + nRect.height/2 < fRect.bottom - 20
+    );
+
+    if (isInside) {
+      newGasket.style.cssText = 'position: absolute; left: 50%; top: 50%; margin-left: -70px; margin-top: -70px; width: 140px; height: 140px; z-index: 1; pointer-events: none; transition: all 0.2s;';
+      newGasket.classList.add('placed');
+      
+      document.getElementById('repairText').textContent = 'Закрутите болты (вправо)!';
+      updateHints("Закрутите все 4 болта по часовой стрелке (вправо).");
+      isScrewingIn = true;
+      boltsDone = 0;
+      
+      document.querySelectorAll('.bolt').forEach(b => {
+        b.classList.remove('done');
+        b.dataset.angle = 0;
+        b.dataset.done = 'false';
+        b.style.transform = 'rotate(0deg)';
+      });
+    } else {
+      // Возврат на исходную позицию внизу
+      newGasket.style.transition = 'all 0.3s';
+      newGasket.style.left = '50%';
+      newGasket.style.top = 'auto';
+      newGasket.style.bottom = '40px';
+      newGasket.style.marginLeft = '-40px';
+      newGasket.style.marginTop = '0';
+      newGasket.style.width = '80px';
+      newGasket.style.height = '80px';
+      newGasket.style.transform = 'none';
+    }
+  }
+}
+
+// ================= ВОЗВРАТ НА ПЛАНШЕТ =================
+function returnToTablet() {
+  document.getElementById('app-dashboard').classList.add('active');
+  
+  const card = currentCallStage === 1 ? document.getElementById('dispatchCard1') : document.getElementById('dispatchCard2');
+  card.style.borderColor = '#22c55e';
+  card.style.animation = 'none';
+  card.style.boxShadow = '0 0 30px rgba(34,197,94,0.2)';
+  card.querySelector('.dispatch-tag').style.background = '#22c55e';
+  card.querySelector('.dispatch-tag').textContent = 'В работе';
+  
+  document.getElementById('startBtn').style.display = 'none';
+  document.getElementById('completePanel').classList.add('show');
+  
+  if (currentCallStage === 1) {
+    document.getElementById('dashHint').innerHTML = 'Поставьте галочку, что утечка устранена, и нажмите «ЗАВЕРШИТЬ ВЫЗОВ»';
+  } else {
+    document.getElementById('dashHint').innerHTML = 'Поставьте галочку, что счетчик заменен, и нажмите «ЗАВЕРШИТЬ ВЫЗОВ»';
+  }
+}
+
+function checkCompleteBtn() {
+  const isChecked = document.getElementById('leakCheck').checked;
+  const btn = document.getElementById('finishBtn');
+  if (isChecked) {
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  } else {
+    btn.disabled = true;
+    btn.style.opacity = '0.5';
+  }
+}
+
+// ЗАВЕРШЕНИЕ ВЫЗОВА
+function finishCall() {
+  if (currentCallStage === 1) {
+    isStoryAdvanced = true; 
+    document.getElementById('osNotifGas').classList.remove('show');
+    document.getElementById('osNotifTg').classList.add('show');
+    document.getElementById('tgBadgeOS').classList.add('show');
+    
+    document.getElementById('osHint').innerHTML = 'Ответьте «царевне лягушке» в Telegram';
+    
+    transitionTo(() => {
+      document.getElementById('app-dashboard').classList.remove('active');
+      document.getElementById('os-screen').classList.add('active'); 
+    });
+  } else {
+    document.getElementById('app-dashboard').classList.remove('active');
+    document.getElementById('alarm-screen').classList.add('active');
+  }
+}
+
+// ================= БУДИЛЬНИК И ДОМ =================
+function goHome() {
+  document.getElementById('alarm-screen').classList.remove('active');
+  
+  const black = document.getElementById('black-screen');
+  black.style.display = 'flex';
+  
+  setTimeout(() => {
+    transitionTo(() => {
+      black.style.display = 'none';
+      document.getElementById('gymbag-screen').classList.add('active');
+      initBagGame(); 
+    });
+  }, 3000); 
+}
+
+// ================= СБОР СУМКИ =================
+let bagItemsDone = 0;
+let draggedBagItem = null;
+let bagGhost = null;
+
+function initBagGame() {
+  bagItemsDone = 0;
+  document.querySelectorAll('.target-item').forEach(el => el.classList.remove('found'));
+  document.querySelectorAll('.bag-item').forEach(el => {
+    el.style.opacity = '1';
+    el.classList.remove('placed', 'wrong-item');
+  });
+}
+
+function startBagDrag(e) {
+  e.preventDefault();
+  draggedBagItem = e.currentTarget;
+  
+  if (draggedBagItem.classList.contains('placed')) return;
+  
+  const rect = draggedBagItem.getBoundingClientRect();
+  bagGhost = draggedBagItem.cloneNode(true);
+  bagGhost.style.position = 'fixed';
+  bagGhost.style.pointerEvents = 'none';
+  bagGhost.style.zIndex = '9999';
+  bagGhost.style.left = (e.clientX - rect.width/2) + 'px';
+  bagGhost.style.top = (e.clientY - rect.height/2) + 'px';
+  bagGhost.style.transform = 'scale(1.2) rotateZ(5deg)';
+  bagGhost.style.opacity = '0.95';
+  bagGhost.style.boxShadow = '0 30px 50px rgba(0,0,0,0.8), 0 0 20px rgba(59,130,246,0.8)';
+  document.body.appendChild(bagGhost);
+  
+  draggedBagItem.style.opacity = '0.3';
+  
+  document.addEventListener('pointermove', moveBagDrag);
+  document.addEventListener('pointerup', endBagDrag);
+}
+
+function moveBagDrag(e) {
+  if (!bagGhost) return;
+  e.preventDefault();
+  const rect = bagGhost.getBoundingClientRect();
+  bagGhost.style.left = (e.clientX - rect.width/2) + 'px';
+  bagGhost.style.top = (e.clientY - rect.height/2) + 'px';
+  
+  const bagZone = document.getElementById('bagZone');
+  const bRect = bagZone.getBoundingClientRect();
+  
+  const dropZone = { 
+    left: bRect.left + 10, 
+    right: bRect.right - 10, 
+    top: bRect.top + 20, 
+    bottom: bRect.bottom 
+  };
+  
+  if (e.clientX >= dropZone.left && e.clientX <= dropZone.right && e.clientY >= dropZone.top && e.clientY <= dropZone.bottom) {
+    bagZone.classList.add('drag-over');
+  } else {
+    bagZone.classList.remove('drag-over');
+  }
+}
+
+function endBagDrag(e) {
+  if (!bagGhost) return;
+  document.removeEventListener('pointermove', moveBagDrag);
+  document.removeEventListener('pointerup', endBagDrag);
+  
+  const bagZone = document.getElementById('bagZone');
+  const bRect = bagZone.getBoundingClientRect();
+  bagZone.classList.remove('drag-over');
+  
+  const dropZone = { 
+    left: bRect.left + 10, 
+    right: bRect.right - 10, 
+    top: bRect.top + 20, 
+    bottom: bRect.bottom 
+  };
+  
+  const droppedInBag = (e.clientX >= dropZone.left && e.clientX <= dropZone.right && e.clientY >= dropZone.top && e.clientY <= dropZone.bottom);
+  const isCorrect = draggedBagItem.dataset.correct === 'true';
+
+  if (droppedInBag) {
+    if (isCorrect) {
+      draggedBagItem.classList.add('placed');
+      draggedBagItem.style.opacity = '0';
+      
+      const id = draggedBagItem.dataset.id;
+      document.getElementById('target-'+id).classList.add('found');
+      
+      bagItemsDone++;
+      if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
+      
+      if (bagItemsDone === 3) {
+        setTimeout(() => {
+          transitionTo(() => {
+            document.getElementById('gymbag-screen').classList.remove('active');
+            document.getElementById('gym-screen').classList.add('active');
+            startGymGame();
+          });
+        }, 1000);
+      }
+    } else {
+      draggedBagItem.classList.add('wrong-item');
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      showToast("Это точно не для спортзала! 😂");
+      
+      setTimeout(() => {
+        draggedBagItem.classList.remove('wrong-item');
+      }, 500);
+    }
+  }
+  
+  if (!draggedBagItem.classList.contains('placed')) {
+    draggedBagItem.style.opacity = '1';
+  }
+  
+  bagGhost.remove();
+  bagGhost = null;
+  draggedBagItem = null;
+}
+
+// ================= ТЕЛЕГРАМ =================
+function openTelegramApp() {
+  transitionTo(() => {
+    document.getElementById('os-screen').classList.remove('active');
+    document.getElementById('tg-chat').classList.add('active');
+    
+    if (!isStoryAdvanced) {
+      const chat = document.getElementById('tgChatMessages');
+      chat.innerHTML = '<div class="tg-msg gf">Как там твои дела?</div>';
+      document.getElementById('tgChatStatus').textContent = 'в сети';
+    } else {
+      startChatScript();
+    }
+  });
+}
+
+function closeTelegramChat() {
+  transitionTo(() => {
+    document.getElementById('tg-chat').classList.remove('active');
+    document.getElementById('os-screen').classList.add('active');
+  });
+}
+
+function startChatScript() {
+  if (chatStarted) return;
+  chatStarted = true;
+  
+  const chat = document.getElementById('tgChatMessages');
+  chat.innerHTML = '<div class="tg-msg gf">Как там твои дела?</div>';
+  document.getElementById('tgChatStatus').textContent = 'онлайн';
+  
+  const script = [
+    { sender: 'gf', text: 'Справляешься?', delay: 1500 },
+    { sender: 'maxim', text: 'Привет! Да, утечку устранил, уже закрываю вызов.', delay: 2000 },
+    { sender: 'gf', text: 'Супер! Вечером тебя ждет сюрприз. Не задерживайся 😉', delay: 2500 },
+    { sender: 'maxim', text: 'Я еще домой заскочу, а потом в качалку.', delay: 2500 }
+  ];
+
+  let i = 0;
+  function nextMsg() {
+    if (i >= script.length) {
+      setTimeout(triggerNewCall, 2000);
+      return;
+    }
+    
+    const msg = script[i];
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = `tg-msg ${msg.sender}`;
+      div.textContent = msg.text;
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+      if (navigator.vibrate) navigator.vibrate(20);
+      i++;
+      nextMsg();
+    }, msg.delay);
+  }
+  nextMsg();
+}
+
+function triggerNewCall() {
+  currentCallStage = 2; 
+  transitionTo(() => {
+    document.getElementById('tg-chat').classList.remove('active');
+    document.getElementById('os-screen').classList.add('active');
+    
+    document.getElementById('osNotifTg').classList.remove('show');
+    document.getElementById('tgBadgeOS').classList.remove('show');
+    
+    document.getElementById('osHint').innerHTML = 'Пришёл новый вызов! Нажмите на уведомление.';
+    
+    setTimeout(() => {
+      document.getElementById('osNotifGas2').classList.add('show');
+      document.getElementById('gasBadgeOS').classList.add('show');
+    }, 500);
+    
+    document.getElementById('startBtn').style.display = 'block';
+    document.getElementById('completePanel').classList.remove('show');
+    document.getElementById('leakCheck').checked = false;
+    checkCompleteBtn();
+  });
+}
+
+// ================= ЗАМЕНА СЧЕТЧИКА =================
+let isValveClosed = false;
+let isMeterAnalyzerDragging = false;
+let meterAnalyzerOffset = {x:0, y:0};
+let isAnalyzing = false;
+let analysisTimer = null;
+
+let isZoomActive = false;
+let zoomMode = ''; 
+let isTurningNut = false;
+let lastNutAngle = 0;
+let accumulatedRotation = 0;
+let hoseIsLoose = false;
+let isPullingHose = false;
+let hosePullStartY = 0;
+
+function initMeterGame() {
+  meterStep = 1;
+  isValveClosed = false;
+  document.getElementById('meterTaskText').textContent = 'ШАГ 1: ПЕРЕКРОЙТЕ ГАЗ';
+  document.getElementById('meterTaskText').style.color = 'white';
+  document.getElementById('meterTaskText').style.borderColor = '#fbbf24';
+  document.getElementById('mValve').classList.remove('closed');
+  updateHints("Нажмите на зеленый рычаг, чтобы перекрыть газ");
+  
+  const oldMeter = document.getElementById('oldMeter');
+  oldMeter.style.display = 'flex';
+  oldMeter.style.transform = 'translate(-50%, -50%)';
+  oldMeter.style.opacity = '1';
+  oldMeter.classList.remove('removing', 'connected');
+  
+  const newMeter = document.getElementById('newMeter');
+  newMeter.style.display = 'none';
+  newMeter.style.transform = 'translate(-50%, 200%)';
+  newMeter.style.opacity = '0';
+  newMeter.classList.remove('installing', 'connected');
+  
+  const mHose = document.getElementById('mHose');
+  mHose.classList.remove('show');
+  
+  const analyzer = document.getElementById('mAnalyzer');
+  analyzer.classList.remove('show', 'analyzing');
+  analyzer.querySelector('.m-analyzer-val').textContent = '0.0%';
+  analyzer.querySelector('.m-analyzer-val').style.color = '#22c55e';
+  
+  document.getElementById('paperOverlay').classList.remove('active');
+  document.getElementById('hose-zoom').classList.remove('active');
+}
+
+function toggleMeterValve() {
+  if (meterStep === 1 && !isValveClosed) {
+    isValveClosed = true;
+    document.getElementById('mValve').classList.add('closed');
+    if (navigator.vibrate) navigator.vibrate(50);
+    
+    setTimeout(() => {
+      meterStep = 2;
+      document.getElementById('meterTaskText').textContent = 'ШАГ 2: ЗАПИШИТЕ ПОКАЗАНИЯ';
+      updateHints("Нажмите «ЗАПИСАТЬ» в появившемся акте");
+      document.getElementById('paperOverlay').classList.add('active');
+    }, 500);
+  } else if (meterStep === 6 && isValveClosed) {
+    isValveClosed = false;
+    document.getElementById('mValve').classList.remove('closed');
+    if (navigator.vibrate) navigator.vibrate(50);
+    
+    setTimeout(() => {
+      meterStep = 7;
+      document.getElementById('meterTaskText').textContent = 'ШАГ 7: ПРОВЕРКА ГАЗОАНАЛИЗАТОРОМ';
+      updateHints("Перетащите прибор к новому счетчику и держите, пока не появится «НОРМА»");
+      document.getElementById('mAnalyzer').classList.add('show');
+    }, 500);
+  }
+}
+
+function confirmPaper() {
+  document.getElementById('paperOverlay').classList.remove('active');
+  meterStep = 3;
+  document.getElementById('meterTaskText').textContent = 'ШАГ 3: ОТСОЕДИНИТЕ ШЛАНГ';
+  updateHints("Нажмите на шланг. Крутите гайку против часовой, затем тяните шланг вниз.");
+  
+  const mHose = document.getElementById('mHose');
+  mHose.classList.add('show');
+}
+
+function removeOldMeter() {
+  if (meterStep !== 4) return;
+  
+  const oldMeter = document.getElementById('oldMeter');
+  oldMeter.classList.add('removing');
+  if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+  
+  setTimeout(() => {
+    oldMeter.style.display = 'none';
+    oldMeter.classList.remove('removing');
+    
+    meterStep = 5;
+    document.getElementById('meterTaskText').textContent = 'ШАГ 5: ПОДКЛЮЧИТЕ ШЛАНГ';
+    updateHints("Нажмите на шланг. Притяните его вверх и закрутите гайку по часовой стрелке.");
+    
+    const newMeter = document.getElementById('newMeter');
+    newMeter.style.display = 'flex';
+    newMeter.style.transform = 'translate(-50%, 150%)';
+    newMeter.style.opacity = '0';
+    
+    setTimeout(() => {
+      newMeter.style.transform = 'translate(-50%, -50%)';
+      newMeter.style.opacity = '1';
+    }, 50);
+    
+    const mHose = document.getElementById('mHose');
+    mHose.classList.add('show');
+    
+  }, 400);
+}
+
+function openHoseZoom() {
+  if (meterStep === 3) {
+    zoomMode = 'unscrew';
+    updateHints('Крутите гайку ПРОТИВ часовой');
+  } else if (meterStep === 5) {
+    zoomMode = 'screw';
+    updateHints('Крутите гайку ПО часовой');
+  } else {
+    return;
+  }
+
+  isZoomActive = true;
+  accumulatedRotation = 0;
+  hoseIsLoose = false;
+  isTurningNut = false;
+  isPullingHose = false;
+  
+  const nutBody = document.getElementById('zoomNutBody');
+  const hoseTube = document.getElementById('zoomHoseTube');
+  
+  nutBody.style.transform = 'rotate(0deg)';
+  hoseTube.style.transform = 'translateY(0)';
+  
+  document.getElementById('hose-zoom').classList.add('active');
+
+  const nutContainer = document.getElementById('zoomNutContainer');
+  nutContainer.onpointerdown = null;
+  hoseTube.onpointerdown = null;
+
+  nutContainer.onpointerdown = startNutTurn;
+  hoseTube.onpointerdown = startHosePull;
+}
+
+function startNutTurn(e) {
+  if (!isZoomActive || hoseIsLoose) return;
+  e.preventDefault();
+  isTurningNut = true;
+  const rect = document.getElementById('zoomNutContainer').getBoundingClientRect();
+  lastNutAngle = Math.atan2(e.clientY - (rect.top + rect.height/2), e.clientX - (rect.left + rect.width/2)) * (180 / Math.PI);
+  
+  document.addEventListener('pointermove', moveNutTurn);
+  document.addEventListener('pointerup', endNutTurn);
+  document.addEventListener('pointercancel', endNutTurn);
+}
+
+function moveNutTurn(e) {
+  if (!isTurningNut || !isZoomActive) return;
+  e.preventDefault();
+  
+  const rect = document.getElementById('zoomNutContainer').getBoundingClientRect();
+  const angle = Math.atan2(e.clientY - (rect.top + rect.height/2), e.clientX - (rect.left + rect.width/2)) * (180 / Math.PI);
+  
+  let diff = angle - lastNutAngle;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+  
+  let isValidMove = zoomMode === 'unscrew' ? (diff < 0) : (diff > 0);
+  
+  if (isValidMove) {
+    accumulatedRotation += diff;
+    document.getElementById('zoomNutBody').style.transform = `rotate(${accumulatedRotation}deg)`;
+    
+    if (navigator.vibrate) navigator.vibrate(5);
+    
+    const targetRot = zoomMode === 'unscrew' ? -720 : 720; 
+    
+    if ((zoomMode === 'unscrew' && accumulatedRotation <= targetRot) || 
+        (zoomMode === 'screw' && accumulatedRotation >= targetRot)) {
+      
+      isTurningNut = false;
+      hoseIsLoose = true;
+      document.removeEventListener('pointermove', moveNutTurn);
+      document.removeEventListener('pointerup', endNutTurn);
+      document.removeEventListener('pointercancel', endNutTurn);
+      
+      if (zoomMode === 'unscrew') {
+        updateHints('Теперь ТЯНИТЕ шланг ВНИЗ');
+      } else {
+        updateHints('Готово!');
+        setTimeout(closeZoomAndFinishConnect, 500);
+      }
+    }
+  }
+  lastNutAngle = angle;
+}
+
+function endNutTurn(e) {
+  isTurningNut = false;
+  document.removeEventListener('pointermove', moveNutTurn);
+  document.removeEventListener('pointerup', endNutTurn);
+  document.removeEventListener('pointercancel', endNutTurn);
+}
+
+function startHosePull(e) {
+  if (!isZoomActive || !hoseIsLoose || zoomMode !== 'unscrew') return;
+  e.preventDefault();
+  isPullingHose = true;
+  hosePullStartY = e.clientY;
+  
+  document.addEventListener('pointermove', moveHosePull);
+  document.addEventListener('pointerup', endHosePull);
+  document.addEventListener('pointercancel', endHosePull);
+}
+
+function moveHosePull(e) {
+  if (!isPullingHose || !isZoomActive) return;
+  e.preventDefault();
+  
+  const dy = e.clientY - hosePullStartY;
+  const tube = document.getElementById('zoomHoseTube');
+  
+  if (dy > 0) {
+    tube.style.transform = `translateY(${dy}px)`;
+  }
+}
+
+function endHosePull(e) {
+  if (!isPullingHose) return;
+  isPullingHose = false;
+  document.removeEventListener('pointermove', moveHosePull);
+  document.removeEventListener('pointerup', endHosePull);
+  document.removeEventListener('pointercancel', endHosePull);
+  
+  const dy = e.clientY - hosePullStartY;
+  const tube = document.getElementById('zoomHoseTube');
+  
+  if (zoomMode === 'unscrew' && dy > 80) {
+    closeZoomAndFinishDisconnect();
+  } else {
+    tube.style.transform = 'translateY(0)';
+  }
+}
+
+function closeZoomAndFinishDisconnect() {
+  document.getElementById('hose-zoom').classList.remove('active');
+  document.getElementById('mHose').classList.remove('show');
+  
+  meterStep = 4;
+  document.getElementById('meterTaskText').textContent = 'ШАГ 4: СНИМИТЕ СТАРЫЙ СЧЕТЧИК';
+  updateHints("Нажмите на старый счетчик, чтобы снять его");
+}
+
+function closeZoomAndFinishConnect() {
+  document.getElementById('hose-zoom').classList.remove('active');
+  document.getElementById('newMeter').classList.add('connected');
+  if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+  
+  meterStep = 6;
+  document.getElementById('meterTaskText').textContent = 'ШАГ 6: ОТКРОЙТЕ ГАЗ';
+  updateHints("Нажмите на красный рычаг, чтобы открыть газ");
+}
+
+function startMeterAnalyzer(e) {
+  if (meterStep !== 7) return;
+  e.preventDefault();
+  isMeterAnalyzerDragging = true;
+  
+  const el = document.getElementById('mAnalyzer');
+  const rect = el.getBoundingClientRect();
+  meterAnalyzerOffsetX = e.clientX - rect.left;
+  meterAnalyzerOffsetY = e.clientY - rect.top;
+  
+  el.style.position = 'fixed';
+  el.style.left = rect.left + 'px';
+  el.style.top = rect.top + 'px';
+  el.style.bottom = 'auto';
+  el.style.margin = '0';
+  el.style.transform = 'none';
+  
+  document.addEventListener('pointermove', moveMeterAnalyzer);
+  document.addEventListener('pointerup', endMeterAnalyzer);
+  document.addEventListener('pointercancel', endMeterAnalyzer);
+}
+
+function moveMeterAnalyzer(e) {
+  if (!isMeterAnalyzerDragging) return;
+  e.preventDefault();
+  
+  const el = document.getElementById('mAnalyzer');
+  el.style.left = (e.clientX - meterAnalyzerOffsetX) + 'px';
+  el.style.top = (e.clientY - meterAnalyzerOffsetY) + 'px';
+  
+  const scene = document.querySelector('.meter-scene');
+  const sceneRect = scene.getBoundingClientRect();
+  const centerX = sceneRect.left + sceneRect.width / 2;
+  const centerY = sceneRect.top + sceneRect.height / 2 + 60; 
+  
+  const dist = Math.hypot(e.clientX - centerX, e.clientY - centerY);
+  const valEl = el.querySelector('.m-analyzer-val');
+  
+  if (dist < 80) {
+    if (!isAnalyzing) {
+      isAnalyzing = true;
+      el.classList.add('analyzing');
+      valEl.textContent = 'АНАЛИЗ...';
+      
+      analysisTimer = setTimeout(() => {
+        el.classList.remove('analyzing');
+        valEl.textContent = '0.0% НОРМА';
+        valEl.style.color = '#22c55e';
+        
+        isMeterAnalyzerDragging = false;
+        document.removeEventListener('pointermove', moveMeterAnalyzer);
+        document.removeEventListener('pointerup', endMeterAnalyzer);
+        document.removeEventListener('pointercancel', endMeterAnalyzer);
+        
+        document.getElementById('meterTaskText').textContent = 'УТЕЧКИ НЕТ! ВЫЗОВ ЗАКРЫТ.';
+        document.getElementById('meterTaskText').style.color = '#22c55e';
+        document.getElementById('meterTaskText').style.borderColor = '#22c55e';
+        updateHints("Отлично! Возвращаемся на планшет.");
+        
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100, 50, 200]);
+        
+        setTimeout(() => {
+          transitionTo(() => {
+            document.getElementById('meter-screen').classList.remove('active');
+            returnToTablet();
+          });
+        }, 2000);
+      }, 2000); 
+    }
+  } else {
+    if (isAnalyzing) {
+      isAnalyzing = false;
+      clearTimeout(analysisTimer);
+      el.classList.remove('analyzing');
+      valEl.textContent = 'ПОИСК...';
+      valEl.style.color = '#aaa';
+    }
+  }
+}
+
+function endMeterAnalyzer(e) {
+  isMeterAnalyzerDragging = false;
+  document.removeEventListener('pointermove', moveMeterAnalyzer);
+  document.removeEventListener('pointerup', endMeterAnalyzer);
+  document.removeEventListener('pointercancel', endMeterAnalyzer);
+  
+  const el = document.getElementById('mAnalyzer');
+  if (isAnalyzing) {
+    isAnalyzing = false;
+    clearTimeout(analysisTimer);
+    el.classList.remove('analyzing');
+    el.querySelector('.m-analyzer-val').textContent = 'ПОИСК...';
+    el.querySelector('.m-analyzer-val').style.color = '#aaa';
+  }
+}
+
+// ================= КАЧАЛКА =================
+let weight = 60;
+let currentSet = 1;
+let maxSets = 3;
+let currentReps = 0;
+let maxRepsPerSet = 5;
+let lives = 3;
+let isGymFinished = false;
+let isResting = false;
+let pulse = 70; 
+let pulseInterval;
+let indicatorPos = 0;
+let direction = 1;
+let speed = 1.5; 
+let animationId;
+let zoneStart = 35, zoneEnd = 65, zoneWidth = 30;
+
+const pushBtn = document.getElementById('pushBtn');
+const restBtn = document.getElementById('restBtn');
+
+function startGymGame() {
+  weight = 60; currentSet = 1; currentReps = 0; lives = 3; isGymFinished = false; isResting = false; pulse = 70;
+  zoneStart = 35; zoneEnd = 65; zoneWidth = 30;
+  
+  restBtn.classList.remove('show', 'disabled');
+  restBtn.textContent = 'ПЕРЕДОХНУТЬ';
+  pushBtn.classList.remove('disabled');
+  updateGymUI();
+  
+  if(pulseInterval) clearInterval(pulseInterval);
+  pulseInterval = setInterval(gymPulseTick, 500);
+  
+  cancelAnimationFrame(animationId);
+  animateIndicator();
+}
+
+function updateGymUI() {
+  document.getElementById('gymWeight').textContent = weight;
+  document.getElementById('gymSet').textContent = currentSet;
+  document.getElementById('gymReps').textContent = currentReps;
+  document.getElementById('gymLives').textContent = '❤️'.repeat(lives) + '🖤'.repeat(3 - lives);
+  document.getElementById('timingZone').style.left = zoneStart + '%';
+  document.getElementById('timingZone').style.width = (zoneEnd - zoneStart) + '%';
+  document.getElementById('plateLeft').dataset.weight = weight;
+  document.getElementById('plateRight').dataset.weight = weight;
+  
+  const pulseEl = document.getElementById('pulseValue');
+  pulseEl.textContent = Math.round(pulse);
+  
+  if (pulse > 140) {
+    pulseEl.classList.add('danger');
+    document.getElementById('ekgLine').classList.add('danger');
+  } else {
+    pulseEl.classList.remove('danger');
+    document.getElementById('ekgLine').classList.remove('danger');
+  }
+  
+  if (pulse > 150 && !isResting) {
+    pushBtn.classList.add('disabled');
+    restBtn.classList.add('show');
+  } else if (pulse < 130 && !isResting) {
+    pushBtn.classList.remove('disabled');
+    restBtn.classList.remove('show');
+  }
+}
+
+function gymPulseTick() {
+  if (isGymFinished) return;
+  
+  if (isResting) {
+    pulse -= 6; 
+    if (pulse <= 115) {
+      pulse = 115;
+      isResting = false;
+      restBtn.classList.remove('disabled');
+      restBtn.textContent = 'ПЕРЕДОХНУТЬ';
+      restBtn.classList.remove('show');
+      pushBtn.classList.remove('disabled');
+    }
+  } else {
+    pulse -= 0.5; 
+    if (pulse < 70) pulse = 70;
+  }
+  
+  updateGymUI();
+}
+
+function animateIndicator() {
+  if (isGymFinished) return;
+  
+  if (!isResting) {
+    indicatorPos += direction * speed;
+    if (indicatorPos >= 100) { indicatorPos = 100; direction = -1; }
+    else if (indicatorPos <= 0) { indicatorPos = 0; direction = 1; }
+    document.getElementById('timingIndicator').style.left = indicatorPos + '%';
+    if (weight >= 80) speed = 2.0;
+    if (weight >= 100) speed = 2.8;
+  }
+  
+  animationId = requestAnimationFrame(animateIndicator);
+}
+
+pushBtn.addEventListener('pointerdown', (e) => {
+  e.preventDefault();
+  if (isGymFinished || isResting) return;
+  
+  if (indicatorPos >= zoneStart && indicatorPos <= zoneEnd) {
+    currentReps++;
+    pulse += 15; 
+    if (navigator.vibrate) navigator.vibrate(50);
+    
+    const b = document.getElementById('barbellContainer');
+    b.classList.remove('lift'); void b.offsetWidth; b.classList.add('lift');
+    setTimeout(() => b.classList.remove('lift'), 200);
+    
+    const flash = document.getElementById('screenFlash');
+    flash.classList.remove('success'); void flash.offsetWidth; flash.classList.add('success');
+    
+    if (currentReps >= maxRepsPerSet) {
+      if (weight >= 100) { winGymGame(); return; }
+      
+      weight += 20; 
+      currentSet++;
+      currentReps = 0;
+      zoneWidth = Math.max(10, zoneWidth - 5);
+      zoneStart = Math.random() * (100 - zoneWidth);
+      zoneEnd = zoneStart + zoneWidth;
+      
+      if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+      showToast(`Подход пройден! Вес увеличен до ${weight} кг`, true);
+    }
+    updateGymUI();
+  } else {
+    lives--;
+    pulse += 30; 
+    if (navigator.vibrate) navigator.vibrate(200);
+    
+    const b = document.getElementById('barbellContainer');
+    b.classList.remove('fail'); void b.offsetWidth; b.classList.add('fail');
+    
+    const flash = document.getElementById('screenFlash');
+    flash.classList.remove('error'); void flash.offsetWidth; flash.classList.add('error');
+    
+    const jokes = ["Слабовато для газовика!", "Штанга тяжелая, да? 😂", "Мимо! Соберись, качок!", "Мышцы есть, а реакции нет?"];
+    showToast(jokes[Math.floor(Math.random() * jokes.length)]);
+    
+    if (lives <= 0) { 
+      isGymFinished = true;
+      clearInterval(pulseInterval);
+      showToast("Всё, ты устал. Начинаем сначала...");
+      setTimeout(() => { startGymGame(); }, 2000);
+      return; 
+    }
+    updateGymUI();
+  }
+});
+
+restBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  if (isResting) return;
+  
+  isResting = true;
+  restBtn.classList.add('disabled');
+  restBtn.textContent = 'ОТДЫХАЕМ...';
+  pushBtn.classList.add('disabled');
+});
+
+function winGymGame() {
+  isGymFinished = true; 
+  cancelAnimationFrame(animationId);
+  clearInterval(pulseInterval);
+  
+  transitionTo(() => {
+    document.getElementById('gym-screen').classList.remove('active');
+    document.getElementById('phone-screen').classList.add('active');
+  });
+}
+
+// ================= ТЕЛЕФОН / ЗВОНКИ =================
+function startCall() {
+  document.getElementById('active-call-overlay').classList.add('active');
+  const dialog = document.getElementById('callDialogue');
+  const status = document.getElementById('callStatus');
+  const timerEl = document.getElementById('callTimer');
+  const responseBtn = document.getElementById('callResponseBtn');
+  
+  dialog.textContent = '';
+  status.textContent = 'Вызов...';
+  timerEl.textContent = '00:00';
+  responseBtn.classList.remove('show');
+  callSeconds = 0;
+  
+  if(callTimerInterval) clearInterval(callTimerInterval);
+
+  setTimeout(() => {
+    status.textContent = 'В сети';
+    dialog.textContent = '«Да любимый, ты уже справился?»';
+    if (navigator.vibrate) navigator.vibrate(100);
+    
+    callTimerInterval = setInterval(() => {
+      callSeconds++;
+      let mins = Math.floor(callSeconds / 60).toString().padStart(2, '0');
+      let secs = (callSeconds % 60).toString().padStart(2, '0');
+      timerEl.textContent = `${mins}:${secs}`;
+    }, 1000);
+
+    setTimeout(() => {
+      dialog.textContent = '«Я жду тебя дома, давай быстрее»';
+      
+      setTimeout(() => {
+        responseBtn.classList.add('show');
+      }, 2000);
+
+    }, 3000);
+    
+  }, 2000);
+}
+
+function respondToCall() {
+  clearInterval(callTimerInterval);
+  document.getElementById('active-call-overlay').classList.remove('active');
+  
+  transitionTo(() => {
+    document.getElementById('phone-screen').classList.remove('active');
+    document.getElementById('stats-screen').classList.add('active');
+  });
+}
+
+function endCall() {
+  clearInterval(callTimerInterval);
+  document.getElementById('active-call-overlay').classList.remove('active');
+}
+
+// ================= СТАТИСТИКА И СЕРТИФИКАТ =================
+function showCertificate() {
+  transitionTo(() => {
+    document.getElementById('stats-screen').classList.remove('active');
+    document.getElementById('cert-screen').classList.add('active');
+  });
+}
+</script>
+</body>
+</html>
